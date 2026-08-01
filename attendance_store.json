@@ -1,0 +1,694 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "System Administrator",
+      "email": "admin@attendance.com",
+      "username": "admin",
+      "password_hash": "$2a$10$wT8K8U1nL8tWqP1c1O1e1e.0123456789abcdefghijklmnopqrstuv",
+      "role": "admin",
+      "phone": "+91 9876543210",
+      "status": "active"
+    },
+    {
+      "id": 10,
+      "name": "Pratibha Sharma",
+      "email": "pratibha123@gmail.com",
+      "username": "pratibhasharma",
+      "password_hash": "9c870cdb6d7c06cbac8ed7e9b1618e02:d342df5b371237b88cfaff3577cc0d7371545360e09707140e0efc9c0cfea14355cc7251c9cad307817ee6cf7c8fa3abc52e04456b5437d224a80de7162c6a9f",
+      "role": "faculty",
+      "phone": "8489890066",
+      "status": "active"
+    },
+    {
+      "id": 11,
+      "name": "Yagnesh patel",
+      "email": "yagnesh123@gmail.com",
+      "username": "yagneshpatel",
+      "password_hash": "95a652e7d5d86add8ec3eaef0b600e43:a200ca53ef37e71bdf4961000bea7c1d803e4d9ac826efd8120487910577467a3a6e72c1e37f4d29c80cd2b81a340bfb2972ae758fa9785542219fe45197c8f1",
+      "role": "faculty",
+      "phone": "9898479840",
+      "status": "active"
+    },
+    {
+      "id": 12,
+      "name": "Dhyani",
+      "email": "dhyani123@gmail.com",
+      "username": "086",
+      "password_hash": "31047832f9353219681599cafeb4d0b7:58eb67d9c6897549e5cb2584b012cf0e4b49a0aed133b8a28ade2939de7745540501ce1eb448598e697c2e50c72239fd025b2eda3c9d564becf398193f17ebda",
+      "role": "student",
+      "phone": "8489890069",
+      "status": "active"
+    },
+    {
+      "id": 13,
+      "name": "Astha",
+      "email": "astha123@gmail.com",
+      "username": "083",
+      "password_hash": "83aee66249d5f9b6cd155750df4ca71e:09407f9ff1542facd4976927273400102050cf3f8b8a9544d3ab57a60bf83fef8e6efcc92827d21556d70e7418c07f0133d0af38468d356cf1c3f19629569f9a",
+      "role": "student",
+      "phone": "1234567895",
+      "status": "active"
+    },
+    {
+      "id": 14,
+      "name": "Chirag patel",
+      "email": "chirag123@gmail.com",
+      "username": "chiragpatel",
+      "password_hash": "6436ebf2ef8d6a03f0b596f21eb90dc9:07d2077629b9a654c0dc71ad3229398ef8895fda6896bbc70966e781f51a0440d477612f7931dc7b5ce5b15ef6f9af4156c9b11df1282b4a895719299156bab0",
+      "role": "hod",
+      "phone": "9898479867",
+      "status": "active"
+    },
+    {
+      "id": 15,
+      "name": "Manisha patel",
+      "email": "manisha123@gmail.com",
+      "username": "manishapatel",
+      "password_hash": "5653dce3d2d1f68c4f6810083e9a7156:ef0d6f85e5752169dcc161b18f30106c54b641f55b2810cdc2d1b3bb83b809feb98bd0256a7afdfdb516ec57ca070bfc637b9efd746edfa5d97689d1f083530b",
+      "role": "hod",
+      "phone": "9898439867",
+      "status": "active"
+    },
+    {
+      "id": 16,
+      "name": "Preksha patel",
+      "email": "preksha123@gmail.com",
+      "username": "prekshapatel",
+      "password_hash": "d430141b1c280e98baaa977eccb4ed3e:9c9a6786c18cf6bc2820054dedecd74ddab598a2824af5dc6230d20fa96beab484007ad7950baf3c47d0d45d22b2ddc288cae1e9fa55ef86d588ffaa40085aae",
+      "role": "hod",
+      "phone": "8489899969",
+      "status": "active"
+    },
+    {
+      "id": 17,
+      "name": "Mitesh patel",
+      "email": "mitesh123@gmail.com",
+      "username": "miteshpatel",
+      "password_hash": "04bc804bb93d0915573472affe429dff:656fe6374dd1b1169ff0815875d34d08e0852c328c5fc530ba48dbbc84545be5b24fe09aea1900280dd7af969680d4519cc7070d11f9d35028c4d86f24e60aff",
+      "role": "hod",
+      "phone": "9884760670",
+      "status": "active"
+    },
+    {
+      "id": 18,
+      "name": "Jeny patel",
+      "email": "jeny123@gmail.com",
+      "username": "106",
+      "password_hash": "fe869e37d2e43c1594b21bb42a311644:b9ccba628d882db524fed06b2a6d4c866d83c167f0f356e6a893dc6251c3fd19d52e7c47814e1b4fc8ca9c562d2e45e368cdaccc9b0ac4878ed66748e96f30ae",
+      "role": "student",
+      "phone": "9898479841",
+      "status": "active"
+    },
+    {
+      "id": 19,
+      "name": "Namya patel",
+      "email": "namya@gmail.com",
+      "username": "109",
+      "password_hash": "adfb587b449687f84c8d60497bf8fa8b:13d9e395480fa57700a2f0158fb4c46e16f07f08b9f4238c3f7d5eb62fbcdbecce38f6e5e62f02ce89cd20cb6778b9de7c4b5b97f6aaaa632dc6e33d1d4326dd",
+      "role": "student",
+      "phone": "9408427289",
+      "status": "active"
+    },
+    {
+      "id": 20,
+      "name": "Aarohi patel",
+      "email": "arohi@gmail.com",
+      "username": "122",
+      "password_hash": "9b526e141c5ddec751bc455a9c0348a2:bbc5858c1c03f27e6bb5d3c9996815b116184850acc35487077c459338904c65fb5036da7e6c69e6348e88e5316a0d762da929e26a9184da823c30e2658e1ce8",
+      "role": "student",
+      "phone": "9898479848",
+      "status": "active"
+    },
+    {
+      "id": 21,
+      "name": "Krisha patel",
+      "email": "krisha@gmail.com",
+      "username": "211",
+      "password_hash": "e96dd84bac010d4eec067c5208069510:ec9d8f57b37c03dd2f2d6d727a4df986d74017d3ae603f27fb6136d27951f3d477d303706351a223b3c561bff90b4c3b61065f6473ed56552aaed75bc9dd293f",
+      "role": "student",
+      "phone": "7874707606",
+      "status": "active"
+    },
+    {
+      "id": 22,
+      "name": "Ridhhi patel",
+      "email": "ridhhi@gmail.com",
+      "username": "127",
+      "password_hash": "f496834d14294519b82da20fe3def4fc:4aa715dc085ee65590578a6c2aa4c6b3eca009beece7465330a5727d7a3a37bf820d53bf14ffdd4da49126a1ba7477f04414581cf7adcc6915192c09765e6206",
+      "role": "student",
+      "phone": "9879654329",
+      "status": "active"
+    },
+    {
+      "id": 23,
+      "name": "Kavy patel",
+      "email": "kavy@gmail.com",
+      "username": "101",
+      "password_hash": "8bfbbfffafc1edda6fe8d9646d07fe7a:d2306902b6b7fc7e532a507e11536284734a085826ca53946833733f72ae211fed568b761c8c5e5abefbf0d4d04a8d9a4f656b80fc58f14c608b7e5970d76a7d",
+      "role": "student",
+      "phone": "8489890077",
+      "status": "active"
+    },
+    {
+      "id": 24,
+      "name": "Vaidik patel",
+      "email": "vaidik@gmail.com",
+      "username": "127",
+      "password_hash": "5cf6cd4661719b4c94201ed87e430877:f8270cfda37c405088426459f72f509676dd7fb5ffe02eb283c83b43c8b83a5f0c1f974754900bd393e3e29ebf8846e25da07ed81bc65481009075da2420d764",
+      "role": "student",
+      "phone": "9873456769",
+      "status": "active"
+    },
+    {
+      "id": 25,
+      "name": "Shubham patel",
+      "email": "shubham@gmail.com",
+      "username": "107",
+      "password_hash": "bdcb0c986698514020f702281a96a8ef:2cd396e645240b638e5826f3955f83a75994f9ec1d2acef20445a775ccf3390e2ca88b9d9153576ae02565f864eda490fdf61b7921e350ae39e39dbad200be64",
+      "role": "student",
+      "phone": "1234567892",
+      "status": "active"
+    },
+    {
+      "id": 26,
+      "name": "Ripal patel",
+      "email": "ripal@gmail.com",
+      "username": "56",
+      "password_hash": "e47e3c57d1a1b6dbff5ff6809c7aa06e:32c9e3e3b9fabb8ec4a8b00b6e4da901e46cd0072836738cca6c891cf73739e5fc93bc5ae9efe499c585e5cd1b38d10e5c3367fa84e88cc48a227719947cd88d",
+      "role": "student",
+      "phone": "9879384565",
+      "status": "active"
+    },
+    {
+      "id": 27,
+      "name": "Jatin patel",
+      "email": "jatin@gmail.com",
+      "username": "47",
+      "password_hash": "fe57e6e844153d2453854ab01068aa9c:5c33f71a4ee66daa700c0cebff17a7eaaafc67287b0289123ec2f1c7c936960918771d01c2af8ada584617824b563e5558734aa7cab3b34849a556ed543e7742",
+      "role": "student",
+      "phone": "9567435890",
+      "status": "active"
+    },
+    {
+      "id": 28,
+      "name": "Stavan patel",
+      "email": "stavan@gmail.com",
+      "username": "87",
+      "password_hash": "49f9598d922483ec9b9eb1b0b0faf14a:0a66c2d2ce6f95c3353fe304a2a4cc418b7366448bd5eb83edf4da100e2da285ae29231edbf1f610d0e9dbe2e8c844b80e914640d5070591b82c8a4ddc6e0959",
+      "role": "student",
+      "phone": "6758324180",
+      "status": "active"
+    }
+  ],
+  "students": [
+    {
+      "id": 5,
+      "user_id": 12,
+      "roll_number": "086",
+      "department": "Computer Science",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 6,
+      "user_id": 13,
+      "roll_number": "083",
+      "department": "Computer Science",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 7,
+      "user_id": 18,
+      "roll_number": "106",
+      "department": "Mechanical Engineering",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 8,
+      "user_id": 19,
+      "roll_number": "109",
+      "department": "Mechanical Engineering",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 9,
+      "user_id": 20,
+      "roll_number": "122",
+      "department": "Mechanical Engineering",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 10,
+      "user_id": 21,
+      "roll_number": "211",
+      "department": "Mechanical Engineering",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 11,
+      "user_id": 22,
+      "roll_number": "127",
+      "department": "Mechanical Engineering",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 12,
+      "user_id": 23,
+      "roll_number": "101",
+      "department": "Mechanical Engineering",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 13,
+      "user_id": 24,
+      "roll_number": "127",
+      "department": "Mechanical Engineering",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 14,
+      "user_id": 25,
+      "roll_number": "107",
+      "department": "Mechanical Engineering",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 15,
+      "user_id": 26,
+      "roll_number": "56",
+      "department": "Mechanical Engineering",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 16,
+      "user_id": 27,
+      "roll_number": "47",
+      "department": "Mechanical Engineering",
+      "semester": 6,
+      "section": "A"
+    },
+    {
+      "id": 17,
+      "user_id": 28,
+      "roll_number": "87",
+      "department": "Computer Science",
+      "semester": 6,
+      "section": "A"
+    }
+  ],
+  "faculty": [
+    {
+      "id": 2,
+      "user_id": 10,
+      "employee_code": "FAC10",
+      "department": "Computer Science",
+      "designation": "Professor"
+    },
+    {
+      "id": 3,
+      "user_id": 11,
+      "employee_code": "FAC11",
+      "department": "Computer Science",
+      "designation": "Professor"
+    }
+  ],
+  "parents": [],
+  "mentors": [],
+  "hods": [
+    {
+      "id": 1,
+      "user_id": 14,
+      "department": "Computer Science"
+    },
+    {
+      "id": 2,
+      "user_id": 15,
+      "department": "Computer Science"
+    },
+    {
+      "id": 3,
+      "user_id": 16,
+      "department": "Computer Science"
+    },
+    {
+      "id": 4,
+      "user_id": 17,
+      "department": "Computer Science"
+    }
+  ],
+  "departments": [
+    {
+      "id": 1,
+      "name": "Computer Science",
+      "code": "CS"
+    },
+    {
+      "id": 2,
+      "name": "Information Technology",
+      "code": "IT"
+    },
+    {
+      "id": 3,
+      "name": "Electrical Engineering",
+      "code": "EE"
+    },
+    {
+      "id": 4,
+      "name": "Mechanical Engineering",
+      "code": "ME"
+    }
+  ],
+  "semesters": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "sections": [
+    "A",
+    "B",
+    "C"
+  ],
+  "qr_codes": [
+    {
+      "id": 1,
+      "token": "ccfdf5155392e17e0d8d018fe9b3fb32",
+      "faculty_id": 2,
+      "valid_until": "2026-07-29T09:36:37.215Z",
+      "is_active": 1,
+      "created_at": "2026-07-29T09:31:37.216Z"
+    },
+    {
+      "id": 2,
+      "token": "97b5eb57beff8fa17e62c9407a1717d3",
+      "faculty_id": 2,
+      "valid_until": "2026-07-29T09:37:48.869Z",
+      "is_active": 0,
+      "created_at": "2026-07-29T09:32:48.869Z"
+    },
+    {
+      "id": 3,
+      "token": "318bc13a9bae82726507253b86151e46",
+      "faculty_id": 2,
+      "valid_until": "2026-07-29T09:34:09.287Z",
+      "is_active": 1,
+      "created_at": "2026-07-29T09:33:09.287Z"
+    },
+    {
+      "id": 4,
+      "token": "bae8fea5636b41b94e8ff105b3b1ce03",
+      "faculty_id": 2,
+      "valid_until": "2026-07-29T09:39:14.784Z",
+      "is_active": 0,
+      "created_at": "2026-07-29T09:34:14.784Z"
+    },
+    {
+      "id": 5,
+      "token": "abe8e898a21f70eacd1875aa2fa84037",
+      "faculty_id": 2,
+      "valid_until": "2026-07-29T09:40:05.438Z",
+      "is_active": 0,
+      "created_at": "2026-07-29T09:35:05.438Z"
+    },
+    {
+      "id": 6,
+      "token": "7284e6d605c42f944a8ee794be8a4f08",
+      "faculty_id": 2,
+      "valid_until": "2026-07-29T09:43:29.261Z",
+      "is_active": 1,
+      "created_at": "2026-07-29T09:38:29.261Z"
+    },
+    {
+      "id": 7,
+      "token": "8a8ed7f618358377fec7ee844d7fa1d7",
+      "faculty_id": 2,
+      "valid_until": "2026-07-29T09:55:18.645Z",
+      "is_active": 1,
+      "created_at": "2026-07-29T09:50:18.645Z"
+    },
+    {
+      "id": 8,
+      "token": "398a1dcd0788e9830d42167b20520d69",
+      "faculty_id": 2,
+      "valid_until": "2026-07-29T09:56:13.819Z",
+      "is_active": 0,
+      "created_at": "2026-07-29T09:51:13.819Z"
+    },
+    {
+      "id": 9,
+      "token": "9afbf135cfdbe87fb07a6e3fe1ec8d89",
+      "faculty_id": 2,
+      "valid_until": "2026-07-29T09:59:02.231Z",
+      "is_active": 1,
+      "created_at": "2026-07-29T09:54:02.231Z"
+    },
+    {
+      "id": 10,
+      "token": "2ac6d9381583608e6d6f02eda2c0431d",
+      "faculty_id": 2,
+      "valid_until": "2026-07-30T09:53:04.087Z",
+      "is_active": 1,
+      "created_at": "2026-07-30T09:52:04.087Z"
+    },
+    {
+      "id": 11,
+      "token": "7d8a78f2946336c1857925859bcbd9b4",
+      "faculty_id": 2,
+      "valid_until": "2026-07-30T10:01:47.742Z",
+      "is_active": 1,
+      "created_at": "2026-07-30T09:56:47.742Z"
+    },
+    {
+      "id": 12,
+      "token": "599ddb807550f33b03a81c97b42f6533",
+      "faculty_id": 1,
+      "valid_until": "2026-07-30T10:25:15.118Z",
+      "is_active": 0,
+      "created_at": "2026-07-30T10:20:15.118Z"
+    },
+    {
+      "id": 13,
+      "token": "e31978c858f61f04a7afc35b81cecc64",
+      "faculty_id": 2,
+      "valid_until": "2026-07-30T12:54:17.998Z",
+      "is_active": 0,
+      "created_at": "2026-07-30T12:49:17.998Z"
+    },
+    {
+      "id": 14,
+      "token": "596a2b67d7f886b31a5c84da4c5de249",
+      "faculty_id": 11,
+      "subject": "Data Structures",
+      "valid_until": "2026-07-31T05:32:46.701Z",
+      "is_active": 0,
+      "created_at": "2026-07-31T05:27:46.701Z"
+    }
+  ],
+  "attendance": [
+    {
+      "id": 1,
+      "student_id": 3,
+      "student_name": "Rahul Sharma",
+      "roll_number": "STU101",
+      "department": "Computer Science",
+      "semester": 6,
+      "date": "2026-07-28",
+      "time": "09:30 AM",
+      "status": "PRESENT",
+      "qr_status": "QR Scanned",
+      "marked_by": "QR_SCAN",
+      "timestamp": "2026-07-28 09:30:00"
+    },
+    {
+      "id": 2,
+      "student_id": 4,
+      "student_name": "Priya Patel",
+      "roll_number": "STU102",
+      "department": "Computer Science",
+      "semester": 6,
+      "date": "2026-07-28",
+      "time": "09:32 AM",
+      "status": "PRESENT",
+      "qr_status": "QR Scanned",
+      "marked_by": "QR_SCAN",
+      "timestamp": "2026-07-28 09:32:00"
+    },
+    {
+      "id": 3,
+      "student_id": 5,
+      "student_name": "Amit Kumar",
+      "roll_number": "STU103",
+      "department": "Computer Science",
+      "semester": 6,
+      "date": "2026-07-28",
+      "time": "09:35 AM",
+      "status": "ABSENT",
+      "qr_status": "Manual",
+      "marked_by": "FACULTY_MANUAL",
+      "timestamp": "2026-07-28 09:35:00"
+    },
+    {
+      "id": 4,
+      "student_id": 3,
+      "student_name": "Rahul Sharma",
+      "roll_number": "STU101",
+      "department": "Computer Science",
+      "semester": 6,
+      "date": "2026-07-29",
+      "time": "03:01 PM",
+      "status": "PRESENT",
+      "qr_status": "Manual",
+      "marked_by": "FACULTY_MANUAL",
+      "timestamp": "2026-07-29 09:31:37"
+    },
+    {
+      "id": 5,
+      "student_id": 4,
+      "student_name": "Priya Patel",
+      "roll_number": "STU102",
+      "department": "Computer Science",
+      "semester": 6,
+      "date": "2026-07-29",
+      "time": "03:09 PM",
+      "status": "ABSENT",
+      "qr_status": "Manual",
+      "marked_by": "FACULTY_MANUAL",
+      "timestamp": "2026-07-29T09:39:16.086Z"
+    },
+    {
+      "id": 6,
+      "student_id": 5,
+      "student_name": "Amit Kumar",
+      "roll_number": "STU103",
+      "department": "Computer Science",
+      "semester": 6,
+      "date": "2026-07-29",
+      "time": "03:09 PM",
+      "status": "PRESENT",
+      "qr_status": "Manual",
+      "marked_by": "FACULTY_MANUAL",
+      "timestamp": "2026-07-29T09:39:18.786Z"
+    },
+    {
+      "id": 7,
+      "student_id": 3,
+      "student_name": "Rahul Sharma",
+      "roll_number": "STU101",
+      "department": "Computer Science",
+      "semester": 6,
+      "date": "2026-07-30",
+      "time": "03:22 PM",
+      "status": "ABSENT",
+      "qr_status": "Manual",
+      "marked_by": "FACULTY_MANUAL",
+      "timestamp": "2026-07-30 09:52:45"
+    },
+    {
+      "id": 8,
+      "student_id": 9,
+      "student_name": "mahi",
+      "roll_number": "105",
+      "department": "Computer Science",
+      "semester": 1,
+      "date": "2026-07-30",
+      "time": "03:27 PM",
+      "status": "PRESENT",
+      "qr_status": "QR Scanned",
+      "marked_by": "QR_SCAN",
+      "timestamp": "2026-07-30 09:57:38"
+    },
+    {
+      "id": 9,
+      "student_id": 9,
+      "student_name": "Mahi",
+      "roll_number": "105",
+      "department": "Computer Science",
+      "semester": 6,
+      "subject": "Data Structures",
+      "date": "2026-07-31",
+      "time": "10:57 AM",
+      "status": "ABSENT",
+      "qr_status": "Manual",
+      "marked_by": "FACULTY_MANUAL",
+      "timestamp": "2026-07-31T05:27:17.918Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": 1,
+      "user_id": 3,
+      "title": "Attendance Marked",
+      "message": "Marked PRESENT for today (2026-07-29 03:01 PM)",
+      "type": "INFO",
+      "is_read": 0,
+      "created_at": "2026-07-29"
+    },
+    {
+      "id": 2,
+      "user_id": 3,
+      "title": "Attendance Marked",
+      "message": "Marked PRESENT for today (2026-07-30 03:22 PM)",
+      "type": "INFO",
+      "is_read": 0,
+      "created_at": "2026-07-30"
+    },
+    {
+      "id": 3,
+      "user_id": 9,
+      "title": "Attendance Marked",
+      "message": "Marked PRESENT for today (2026-07-30 03:27 PM)",
+      "type": "INFO",
+      "is_read": 0,
+      "created_at": "2026-07-30"
+    }
+  ],
+  "subjects": [
+    {
+      "id": 1,
+      "name": "Data Structures",
+      "code": "CS301",
+      "department": "Computer Science"
+    },
+    {
+      "id": 2,
+      "name": "Database Systems",
+      "code": "CS302",
+      "department": "Computer Science"
+    },
+    {
+      "id": 3,
+      "name": "Operating Systems",
+      "code": "CS303",
+      "department": "Computer Science"
+    },
+    {
+      "id": 4,
+      "name": "Web Technologies",
+      "code": "CS304",
+      "department": "Computer Science"
+    },
+    {
+      "id": 5,
+      "name": "Computer Networks",
+      "code": "CS305",
+      "department": "Computer Science"
+    }
+  ],
+  "alerts": [],
+  "simulated_emails": []
+}
