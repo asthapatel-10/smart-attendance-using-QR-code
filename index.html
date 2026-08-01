@@ -1,0 +1,1918 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Attendance System | Government Engineering College</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a' // Deep Navy Blue
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- HTML5 QR Code Camera Scanner Engine -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .animate-pulse-glow { animation: pulseGlow 2s infinite; }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(37, 99, 235, 0.4); }
+      50% { box-shadow: 0 0 25px rgba(37, 99, 235, 0.8); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen antialiased flex flex-col transition-colors duration-200">
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="app" class="flex-1 flex flex-col min-h-0">
+    <!-- Rendered dynamically via SPA Router -->
+  </div>
+
+  <!-- UNIVERSAL ADD/EDIT USER MODAL -->
+  <div id="user-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div class="bg-brand-900 text-white px-6 py-4 flex items-center justify-between">
+        <h3 id="modal-title" class="font-bold text-base"><i class="fa-solid fa-user-gear mr-2"></i>User Details</h3>
+        <button onclick="closeUserModal()" class="text-white/80 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="handleUserFormSubmit(event)" class="p-6 space-y-4">
+        <input type="hidden" id="modal-user-id" value="" />
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">User Role</label>
+          <select id="modal-role" onchange="toggleModalRoleFields()" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white">
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+            <option value="mentor">Mentor</option>
+            <option value="parent">Parent</option>
+            <option value="hod">HOD</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Full Name *</label>
+          <input type="text" id="modal-name" required placeholder="e.g. Rahul Sharma" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-brand-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
+            <input type="email" id="modal-email" placeholder="user@attendance.com" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-brand-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
+            <input type="text" id="modal-phone" placeholder="+91 9876543210" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-brand-500" />
+          </div>
+        </div>
+
+        <!-- Student Specific Fields -->
+        <div id="modal-student-fields" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Roll Number (Student ID) *</label>
+              <input type="text" id="modal-roll" placeholder="STU104" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-brand-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
+              <select id="modal-dept" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white">
+                <option value="Computer Science">Computer Science</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Electrical Engineering">Electrical Engineering</option>
+                <option value="Mechanical Engineering">Mechanical Engineering</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Semester</label>
+              <select id="modal-sem" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white">
+                <option value="6">Semester 6</option>
+                <option value="1">Semester 1</option>
+                <option value="2">Semester 2</option>
+                <option value="3">Semester 3</option>
+                <option value="4">Semester 4</option>
+                <option value="5">Semester 5</option>
+                <option value="7">Semester 7</option>
+                <option value="8">Semester 8</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Section</label>
+              <select id="modal-section" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white">
+                <option value="A">Section A</option>
+                <option value="B">Section B</option>
+                <option value="C">Section C</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Password</label>
+          <input type="password" id="modal-password" placeholder="Leave empty to keep default" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-brand-500" />
+        </div>
+
+        <div id="modal-err-msg" class="hidden p-2.5 rounded-xl bg-rose-100 border border-rose-300 text-rose-700 text-xs font-medium text-center"></div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeUserModal()" class="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-brand-700 text-white text-xs font-bold shadow-md hover:bg-brand-800">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FLOATING AI CHATBOT WIDGET -->
+  <div id="chatbot-container" class="hidden fixed bottom-5 right-5 z-50">
+    <button onclick="toggleChatbot()" class="w-14 h-14 rounded-full bg-brand-700 hover:bg-brand-800 text-white flex items-center justify-center shadow-2xl animate-pulse-glow transition transform hover:scale-105">
+      <i class="fa-solid fa-robot text-2xl"></i>
+    </button>
+
+    <div id="chat-window" class="hidden absolute bottom-16 right-0 w-80 sm:w-96 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col h-[460px]">
+      <div class="bg-brand-900 text-white p-4 flex items-center justify-between shadow-md">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+            <i class="fa-solid fa-graduation-cap text-lg"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm">College Attendance Assistant</h4>
+            <p class="text-xs text-brand-100 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online</p>
+          </div>
+        </div>
+        <button onclick="toggleChatbot()" class="text-white/80 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm">
+        <div class="flex gap-2">
+          <div class="w-7 h-7 rounded-full bg-brand-700 text-white flex items-center justify-center text-xs flex-shrink-0">AI</div>
+          <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl rounded-tl-none border border-slate-200 dark:border-slate-700 shadow-sm max-w-[85%] text-slate-700 dark:text-slate-200">
+            Namaste! How can I assist you with your attendance or institutional metrics today?
+          </div>
+        </div>
+      </div>
+
+      <div class="p-2 bg-slate-100 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex gap-1.5 overflow-x-auto text-[11px]">
+        <button onclick="sendQuickChat('What is my attendance percentage?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-medium hover:bg-brand-50">📊 My Percentage</button>
+        <button onclick="sendQuickChat('What are the attendance rules?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-medium hover:bg-brand-50">📋 Rules</button>
+      </div>
+
+      <form onsubmit="handleChatSubmit(event)" class="p-3 bg-white dark:bg-slate-850 border-t border-slate-200 dark:border-slate-700 flex gap-2">
+        <input type="text" id="chat-input" placeholder="Ask attendance query..." class="flex-1 px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-white" autocomplete="off" />
+        <button type="submit" class="px-4 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-medium text-xs transition">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Global Application State
+    let state = {
+      user: null,
+      token: localStorage.getItem('token') || null,
+      theme: localStorage.getItem('theme') || 'light',
+      selectedRolePortal: null, // 'admin' | 'faculty' | 'student' | 'mentor' | 'parent' | 'hod'
+      currentTab: 'dashboard',
+      students: [],
+      faculty: [],
+      mentors: [],
+      parents: [],
+      hods: [],
+      users: [],
+      attendance: [],
+      alerts: [],
+      notifications: [],
+      subjectSummaries: [],
+      subjects: [],
+      selectedSubject: 'Data Structures',
+      summary: null,
+      metrics: null,
+      activeQRSession: null,
+      qrCountdownInterval: null,
+      qrSecondsLeft: 0,
+      html5QrCodeInstance: null,
+      isScanning: false,
+      searchQuery: '',
+      filterDepartment: '',
+      filterSemester: '',
+      filterDate: ''
+    };
+
+    const API_BASE = '/api';
+
+    // 6 Role Portals Metadata Definitions
+    const ROLE_PORTALS = {
+      student: { name: 'Student Portal', icon: 'fa-user-graduate', bgFrom: 'from-blue-600', bgTo: 'to-blue-800', email: 'rahul@attendance.com' },
+      faculty: { name: 'Faculty Portal', icon: 'fa-chalkboard-user', bgFrom: 'from-indigo-600', bgTo: 'to-brand-900', email: 'rajesh@attendance.com' },
+      mentor:  { name: 'Mentor Portal', icon: 'fa-handshake', bgFrom: 'from-teal-600', bgTo: 'to-emerald-800', email: 'vikram@attendance.com' },
+      parent:  { name: 'Parent Portal', icon: 'fa-user-group', bgFrom: 'from-amber-600', bgTo: 'to-orange-800', email: 'sunita@attendance.com' },
+      hod:     { name: 'HOD Portal', icon: 'fa-building-columns', bgFrom: 'from-rose-600', bgTo: 'to-pink-900', email: 'suresh@attendance.com' },
+      admin:   { name: 'Admin Portal', icon: 'fa-user-gear', bgFrom: 'from-brand-800', bgTo: 'to-slate-900', email: 'admin' }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      if (state.token) {
+        fetchCurrentUser();
+      } else {
+        renderPortalSelect();
+      }
+    });
+
+    function initTheme() {
+      if (state.theme === 'dark' || (!state.theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        state.theme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
+        state.theme = 'light';
+      }
+    }
+
+    function toggleTheme() {
+      state.theme = state.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', state.theme);
+      initTheme();
+      renderApp();
+    }
+
+    async function apiRequest(endpoint, method = 'GET', body = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+
+      try {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          method,
+          headers,
+          body: body ? JSON.stringify(body) : null
+        });
+        return await res.json();
+      } catch (e) {
+        console.error('API Network Error:', e);
+        return { success: false, message: 'Server connection error' };
+      }
+    }
+
+    async function fetchCurrentUser() {
+      const res = await apiRequest('/auth/me');
+      if (res.success) {
+        state.user = res.user;
+        document.getElementById('chatbot-container').classList.remove('hidden');
+        fetchDashboardData();
+      } else {
+        logout();
+      }
+    }
+
+    async function fetchDashboardData() {
+      if (!state.user) return;
+
+      const queryStr = [];
+      if (state.searchQuery) queryStr.push(`search=${encodeURIComponent(state.searchQuery)}`);
+      if (state.filterDepartment) queryStr.push(`department=${encodeURIComponent(state.filterDepartment)}`);
+      if (state.filterSemester) queryStr.push(`semester=${encodeURIComponent(state.filterSemester)}`);
+      if (state.filterDate) queryStr.push(`date=${encodeURIComponent(state.filterDate)}`);
+      const attUrl = `/attendance/list${queryStr.length ? '?' + queryStr.join('&') : ''}`;
+
+      const [metricsRes, attRes, stRes, facRes, alertsRes, notifRes, subjSumRes] = await Promise.all([
+        apiRequest('/reports/metrics'),
+        apiRequest(attUrl),
+        apiRequest('/students'),
+        apiRequest('/faculty'),
+        apiRequest('/alerts/low-attendance'),
+        apiRequest('/notifications/history'),
+        apiRequest('/attendance/subject-summary')
+      ]);
+
+      if (metricsRes.success) state.metrics = metricsRes.metrics;
+      if (attRes.success) state.attendance = attRes.attendance;
+      if (stRes.success) state.students = stRes.students;
+      if (facRes.success) state.faculty = facRes.faculty;
+      if (alertsRes.success) state.alerts = alertsRes.alerts || [];
+      if (notifRes.success) state.notifications = notifRes.notifications || [];
+      if (subjSumRes.success) state.subjectSummaries = subjSumRes.subjectSummaries || [];
+
+      if (state.user.role === 'admin') {
+        const usersRes = await apiRequest('/users');
+        if (usersRes.success) state.users = usersRes.users;
+      }
+
+      if (['student', 'parent'].includes(state.user.role)) {
+        const sumRes = await apiRequest('/attendance/summary');
+        if (sumRes.success) state.summary = sumRes;
+      }
+
+      renderApp();
+    }
+
+    function logout() {
+      stopCameraScanner();
+      state.token = null;
+      state.user = null;
+      state.selectedRolePortal = null;
+      localStorage.removeItem('token');
+      document.getElementById('chatbot-container').classList.add('hidden');
+      renderPortalSelect();
+    }
+
+    // 1. PORTAL SELECTION LANDING HUB (6 PORTALS)
+    function renderPortalSelect() {
+      const appEl = document.getElementById('app');
+      appEl.innerHTML = `
+        <div class="flex-1 flex flex-col justify-center items-center p-6 bg-gradient-to-br from-brand-900 via-blue-900 to-slate-900 text-white relative overflow-hidden">
+          <div class="max-w-4xl w-full text-center space-y-3 mb-10">
+            <div class="w-16 h-16 rounded-2xl bg-brand-600 mx-auto flex items-center justify-center text-3xl shadow-2xl shadow-brand-500/40 border border-white/20">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Smart Attendance System</h1>
+            <p class="text-xs sm:text-sm text-blue-200 max-w-xl mx-auto font-medium">Government Engineering College | Select Role Portal to Login</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl w-full">
+            ${Object.entries(ROLE_PORTALS).map(([roleKey, portal]) => `
+              <div onclick="openRoleLogin('${roleKey}')" class="bg-white/10 hover:bg-white/20 border border-white/15 rounded-2xl p-5 cursor-pointer transition transform hover:-translate-y-1.5 hover:shadow-2xl flex flex-col items-center text-center space-y-3 backdrop-blur-md group">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${portal.bgFrom} ${portal.bgTo} flex items-center justify-center text-2xl text-white shadow-lg border border-white/20 group-hover:scale-110 transition">
+                  <i class="fa-solid ${portal.icon}"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-base text-white">${portal.name}</h3>
+                  <p class="text-[11px] text-blue-200 mt-0.5 capitalize">${roleKey} authentication & dashboard</p>
+                </div>
+                <span class="text-xs font-semibold text-brand-200 group-hover:underline flex items-center gap-1">
+                  Access Portal <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function openRoleLogin(roleKey) {
+      state.selectedRolePortal = roleKey;
+      renderRoleLoginScreen();
+    }
+
+    // 2. DEDICATED ROLE LOGIN SCREENS
+    function renderRoleLoginScreen() {
+      const portal = ROLE_PORTALS[state.selectedRolePortal || 'student'];
+      const appEl = document.getElementById('app');
+
+      const isDefaultAdmin = state.selectedRolePortal === 'admin';
+
+      appEl.innerHTML = `
+        <div class="flex-1 flex items-center justify-center p-4 bg-gradient-to-br ${portal.bgFrom} ${portal.bgTo} text-white">
+          <div class="w-full max-w-md bg-slate-900/95 border border-slate-700/80 rounded-3xl shadow-2xl p-8 backdrop-blur-xl relative overflow-hidden">
+            <button onclick="renderPortalSelect()" class="text-xs text-slate-400 hover:text-white mb-6 flex items-center gap-1.5 transition font-medium">
+              <i class="fa-solid fa-arrow-left"></i> Change Portal
+            </button>
+
+            <div class="text-center space-y-2 mb-8">
+              <div class="w-16 h-16 rounded-2xl bg-white/10 mx-auto flex items-center justify-center text-3xl text-white shadow-lg border border-white/20">
+                <i class="fa-solid ${portal.icon}"></i>
+              </div>
+              <h2 class="text-2xl font-extrabold tracking-tight">${portal.name}</h2>
+              <p class="text-xs text-slate-400">Enter authorized credentials for ${state.selectedRolePortal.toUpperCase()} access.</p>
+            </div>
+
+            <form onsubmit="handleRoleLoginSubmit(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Username / Email</label>
+                <div class="relative">
+                  <i class="fa-solid fa-user absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+                  <input type="text" id="login-identity" required value="${isDefaultAdmin ? 'admin' : portal.email}" class="w-full pl-10 pr-4 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
+                <div class="relative">
+                  <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+                  <input type="password" id="login-password" required value="${isDefaultAdmin ? 'admin123' : 'password123'}" class="w-full pl-10 pr-4 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+              </div>
+
+              <div id="login-error-msg" class="hidden p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs text-center font-medium"></div>
+
+              <button type="submit" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-lg transition transform hover:-translate-y-0.5">
+                Sign In to ${portal.name}
+              </button>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    async function handleRoleLoginSubmit(e) {
+      e.preventDefault();
+      const identity = document.getElementById('login-identity').value;
+      const password = document.getElementById('login-password').value;
+      const role = state.selectedRolePortal;
+
+      const res = await apiRequest('/auth/login', 'POST', { username: identity, email: identity, password, role });
+      const errBox = document.getElementById('login-error-msg');
+
+      if (res.success) {
+        state.token = res.token;
+        state.user = res.user;
+        localStorage.setItem('token', res.token);
+        document.getElementById('chatbot-container').classList.remove('hidden');
+        fetchDashboardData();
+      } else {
+        errBox.classList.remove('hidden');
+        errBox.innerText = res.message || 'Invalid credentials';
+      }
+    }
+
+    // 3. MAIN PROTECTED APPLICATION CONTROLLER
+    function renderApp() {
+      const appEl = document.getElementById('app');
+      if (!state.user) {
+        renderPortalSelect();
+        return;
+      }
+
+      appEl.innerHTML = `
+        <div class="flex-1 flex overflow-hidden">
+          <!-- SIDEBAR (INDIAN COLLEGE BLUE THEME) -->
+          <aside class="w-64 bg-brand-900 text-white flex flex-col flex-shrink-0 hidden md:flex transition-all shadow-xl">
+            <div class="p-5 border-b border-brand-800 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-white text-brand-900 flex items-center justify-center font-extrabold text-xl shadow-lg">
+                <i class="fa-solid fa-graduation-cap"></i>
+              </div>
+              <div>
+                <h2 class="font-extrabold text-sm leading-tight text-white">Smart Attendance</h2>
+                <p class="text-[11px] text-brand-200 capitalize font-medium">${state.user.role} Dashboard</p>
+              </div>
+            </div>
+
+            <!-- Navigation Links Matrix -->
+            <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
+              ${renderNavBtn('dashboard', 'fa-gauge-high', 'Dashboard')}
+              
+              ${state.user.role === 'admin' ? renderNavBtn('user-management', 'fa-users-gear', 'User Management') : ''}
+              ${['admin', 'faculty', 'mentor', 'hod'].includes(state.user.role) ? renderNavBtn('students', 'fa-user-graduate', 'Student Roster') : ''}
+              ${['admin', 'hod'].includes(state.user.role) ? renderNavBtn('faculty', 'fa-chalkboard-user', 'Faculty Directory') : ''}
+              ${state.user.role === 'admin' ? renderNavBtn('academic-modules', 'fa-sitemap', 'Academic Modules') : ''}
+
+              ${['faculty', 'admin'].includes(state.user.role) ? renderNavBtn('qr-session', 'fa-qrcode', 'QR Generator') : ''}
+              ${state.user.role === 'student' ? renderNavBtn('qr-scan', 'fa-camera', 'Scan Attendance QR') : ''}
+
+              ${renderNavBtn('attendance-records', 'fa-table-list', 'Attendance Table')}
+              ${['admin', 'parent', 'student', 'faculty', 'mentor', 'hod'].includes(state.user.role) ? renderNavBtn('notification-history', 'fa-bell', 'Notification History') : ''}
+              ${renderNavBtn('reports', 'fa-file-export', 'Export Reports')}
+            </nav>
+
+            <div class="p-4 border-t border-brand-800 space-y-3 bg-brand-950/40">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-brand-600 text-white font-bold flex items-center justify-center text-sm border border-brand-400">
+                  ${state.user.name.charAt(0)}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-semibold truncate text-white">${state.user.name}</p>
+                  <span class="inline-block px-1.5 py-0.5 rounded text-[10px] uppercase font-extrabold bg-brand-800 text-brand-100">${state.user.role}</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-brand-800 text-xs">
+                <button onclick="toggleTheme()" class="flex items-center gap-2 text-brand-200 hover:text-white transition font-medium">
+                  <i class="fa-solid ${state.theme === 'dark' ? 'fa-sun text-amber-400' : 'fa-moon'}"></i>
+                  <span>${state.theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                </button>
+                <button onclick="logout()" class="text-rose-300 hover:text-rose-100 font-semibold transition flex items-center gap-1">
+                  <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <!-- MAIN CONTENT VIEWPORT -->
+          <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <header class="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 flex items-center justify-between flex-shrink-0">
+              <div class="flex items-center gap-3">
+                <button onclick="document.querySelector('aside').classList.toggle('hidden')" class="md:hidden text-slate-600 dark:text-slate-300">
+                  <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <h1 class="text-lg font-bold capitalize text-slate-900 dark:text-white">
+                  ${state.currentTab.replace('-', ' ')}
+                </h1>
+              </div>
+
+              <div class="flex items-center gap-4">
+                <span class="hidden sm:inline-block px-3 py-1 rounded-full text-xs font-bold bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-slate-600">
+                  Portal: <span class="uppercase">${state.user.role}</span>
+                </span>
+                <button onclick="logout()" class="text-xs text-rose-600 font-semibold hover:underline">
+                  <i class="fa-solid fa-power-off"></i> Exit
+                </button>
+              </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 space-y-6">
+              ${renderProtectedTabContent()}
+            </main>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => { initCharts(); }, 50);
+    }
+
+    function renderNavBtn(tab, icon, label) {
+      const active = state.currentTab === tab;
+      return `
+        <button onclick="switchTab('${tab}')" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-xs transition ${
+          active 
+            ? 'bg-white text-brand-900 font-bold shadow-md' 
+            : 'text-brand-100 hover:bg-brand-800 hover:text-white'
+        }">
+          <i class="fa-solid ${icon} text-sm"></i>
+          <span>${label}</span>
+        </button>
+      `;
+    }
+
+    function switchTab(tab) {
+      if (state.currentTab === 'qr-scan' && tab !== 'qr-scan') {
+        stopCameraScanner();
+      }
+      state.currentTab = tab;
+      renderApp();
+    }
+
+    // PROTECTED ROUTE MATRIX
+    function renderProtectedTabContent() {
+      const role = state.user.role;
+      const tab = state.currentTab;
+
+      if (tab === 'user-management' && role !== 'admin') return renderAccessDenied();
+      if (tab === 'academic-modules' && role !== 'admin') return renderAccessDenied();
+      if (tab === 'students' && !['admin', 'faculty', 'mentor', 'hod'].includes(role)) return renderAccessDenied();
+      if (tab === 'faculty' && !['admin', 'hod'].includes(role)) return renderAccessDenied();
+      if (tab === 'qr-session' && !['faculty', 'admin'].includes(role)) return renderAccessDenied();
+      if (tab === 'qr-scan' && role !== 'student') return renderAccessDenied();
+
+      switch (tab) {
+        case 'dashboard': return renderRoleDashboard();
+        case 'user-management': return renderUserManagementPage();
+        case 'students': return renderStudentsPage();
+        case 'faculty': return renderFacultyPage();
+        case 'academic-modules': return renderAcademicModulesPage();
+        case 'qr-session': return renderQRSessionPage();
+        case 'qr-scan': return renderCameraQRScanPage();
+        case 'attendance-records': return renderAttendanceRecordsPage();
+        case 'notification-history': return renderNotificationHistoryPage();
+        case 'reports': return renderReportsPage();
+        default: return renderRoleDashboard();
+      }
+    }
+
+    function renderAccessDenied() {
+      return `
+        <div class="p-8 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-center space-y-3">
+          <div class="w-14 h-14 rounded-full bg-rose-100 text-rose-600 mx-auto flex items-center justify-center text-2xl">
+            <i class="fa-solid fa-lock"></i>
+          </div>
+          <h3 class="font-bold text-lg text-rose-800 dark:text-rose-200">Access Restricted</h3>
+          <p class="text-xs text-rose-600 dark:text-rose-400">Your role (${state.user.role.toUpperCase()}) is not authorized to access this page.</p>
+          <button onclick="switchTab('dashboard')" class="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs">Return to Dashboard</button>
+        </div>
+      `;
+    }
+
+    // 4. ROLE SPECIFIC DASHBOARDS
+    function renderRoleDashboard() {
+      const role = state.user.role;
+      if (role === 'student') return renderStudentDashboard();
+      if (role === 'parent') return renderParentDashboard();
+      if (role === 'mentor') return renderMentorDashboard();
+      if (role === 'faculty') return renderFacultyDashboard();
+      if (role === 'hod') return renderHODDashboard();
+      return renderAdminDashboard();
+    }
+
+    function renderStudentDashboard() {
+      const summary = state.summary || { overallPercentage: 100.0, totalAttended: 0, totalConducted: 0, totalAbsent: 0 };
+      const isRisk = summary.overallPercentage < 75;
+
+      return `
+        <div class="space-y-6">
+          ${renderLowAttendanceAlertWidget()}
+
+          <div class="bg-gradient-to-r from-blue-700 to-indigo-900 text-white rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">Student Portal</span>
+              <h2 class="text-2xl font-extrabold mt-1">Welcome back, ${state.user.name}!</h2>
+              <p class="text-xs text-blue-100 mt-1">Smart Attendance System | My Attendance Dashboard</p>
+            </div>
+            <button onclick="switchTab('qr-scan')" class="px-5 py-2.5 rounded-xl bg-white text-brand-900 font-bold text-xs shadow-lg hover:bg-brand-50 transition">
+              <i class="fa-solid fa-camera mr-1.5"></i> Scan QR Attendance
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xl shadow-md">
+                <i class="fa-solid fa-percent"></i>
+              </div>
+              <div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">My Attendance %</p>
+                <h3 class="text-xl font-bold ${isRisk ? 'text-rose-600' : 'text-emerald-600'}">${summary.overallPercentage}%</h3>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-md">
+                <i class="fa-solid fa-book-open"></i>
+              </div>
+              <div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Classes</p>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">${summary.totalConducted || 0}</h3>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl shadow-md">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+              <div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Classes Attended</p>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">${summary.totalAttended || 0}</h3>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-rose-600 text-white flex items-center justify-center text-xl shadow-md">
+                <i class="fa-solid fa-user-xmark"></i>
+              </div>
+              <div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Classes Absent</p>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">${summary.totalAbsent || 0}</h3>
+              </div>
+            </div>
+          </div>
+
+          ${renderStudentProgressWidget()}
+
+          ${renderSubjectBreakdownWidget()}
+
+          <div class="max-w-md mx-auto bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-4 text-center">
+              <i class="fa-solid fa-chart-pie mr-2 text-brand-600"></i>My Attendance Distribution
+            </h3>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="doughnutChart"></canvas>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderParentDashboard() {
+      const parentObj = (state.parents || []).find(p => p.user_id === state.user.id);
+      const childUserId = parentObj ? parentObj.student_user_id : null;
+      const child = (state.students || []).find(s => s.user_id === childUserId) || (state.students || [])[0] || {};
+      const summary = state.summary || { overallPercentage: 100.0, totalAttended: 0, totalConducted: 0, totalAbsent: 0 };
+      const isRisk = summary.overallPercentage < 75;
+
+      const childName = child.name || 'Your Child';
+      const childRoll = child.roll_number || 'N/A';
+      const childDept = child.department || 'Computer Science';
+      const childSem = child.semester || 1;
+
+      return `
+        <div class="space-y-6">
+          ${renderLowAttendanceAlertWidget()}
+
+          <div class="bg-gradient-to-r from-amber-600 to-orange-700 text-white rounded-2xl p-6 shadow-xl">
+            <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase">Parent Portal</span>
+            <h2 class="text-2xl font-extrabold mt-1">Child Attendance Overview: ${childName}</h2>
+            <p class="text-xs text-amber-100 mt-1">Roll Number: ${childRoll} | ${childDept} Dept | Semester ${childSem}</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm text-center">
+              <p class="text-xs text-slate-400 font-medium">Overall Attendance</p>
+              <h3 class="text-3xl font-extrabold ${isRisk ? 'text-rose-500' : 'text-emerald-500'} mt-1">${summary.overallPercentage}%</h3>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm text-center">
+              <p class="text-xs text-slate-400 font-medium">Lectures Attended</p>
+              <h3 class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">${summary.totalAttended} / ${summary.totalConducted}</h3>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm text-center">
+              <p class="text-xs text-slate-400 font-medium">Classes Absent</p>
+              <h3 class="text-3xl font-extrabold text-rose-500 mt-1">${summary.totalAbsent}</h3>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm text-center">
+              <p class="text-xs text-slate-400 font-medium">Academic Standing</p>
+              <h3 class="text-xl font-bold ${isRisk ? 'text-rose-500' : 'text-emerald-500'} mt-2">${isRisk ? 'Needs Improvement' : 'Good Standing'}</h3>
+            </div>
+          </div>
+
+          ${renderSubjectBreakdownWidget()}
+
+          <div class="max-w-md mx-auto bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-4 text-center">
+              <i class="fa-solid fa-chart-pie mr-2 text-amber-600"></i>Attendance Distribution (${childName})
+            </h3>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="doughnutChart"></canvas>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMentorDashboard() {
+      const menteeCount = state.students ? state.students.length : 0;
+      const presentToday = state.metrics?.presentToday || 0;
+      const totalAttLogs = state.metrics?.totalAttendance || state.attendance.length;
+
+      return `
+        <div class="space-y-6">
+          ${renderLowAttendanceAlertWidget()}
+
+          <div class="bg-gradient-to-r from-teal-700 to-emerald-800 text-white rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">Mentor Portal</span>
+              <h2 class="text-2xl font-extrabold mt-1">Welcome, ${state.user.name}!</h2>
+              <p class="text-xs text-teal-100 mt-1">Assigned Mentees Monitoring & Guidance</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            ${renderStatCard('Assigned Mentees', menteeCount, 'fa-user-graduate', 'bg-teal-600')}
+            ${renderStatCard('Mentees Present Today', presentToday, 'fa-user-check', 'bg-emerald-600')}
+            ${renderStatCard('Total Mentee Logs', totalAttLogs, 'fa-list-check', 'bg-sky-600')}
+          </div>
+
+          ${renderFacultyInteractiveAttendanceWidget()}
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-4"><i class="fa-solid fa-chart-column mr-2 text-teal-600"></i>Mentee Attendance Percentage</h3>
+              <div class="h-64 relative"><canvas id="dashboardChart"></canvas></div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-4"><i class="fa-solid fa-chart-pie mr-2 text-teal-600"></i>Mentee Status Distribution</h3>
+              <div class="h-64 relative flex items-center justify-center"><canvas id="doughnutChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFacultyDashboard() {
+      const deptStudentsCount = state.metrics?.totalStudents || (state.students ? state.students.length : 0);
+      const presentToday = state.metrics?.presentToday || 0;
+      const totalAttLogs = state.metrics?.totalAttendance || state.attendance.length;
+
+      return `
+        <div class="space-y-6">
+          ${renderLowAttendanceAlertWidget()}
+
+          <div class="bg-gradient-to-r from-indigo-700 to-brand-900 text-white rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">Faculty Portal</span>
+              <h2 class="text-2xl font-extrabold mt-1">Welcome, ${state.user.name}!</h2>
+              <p class="text-xs text-indigo-100 mt-1">Class & Department Attendance Management</p>
+            </div>
+            <button onclick="switchTab('qr-session')" class="px-5 py-2.5 rounded-xl bg-white text-brand-900 font-bold text-xs shadow-lg hover:bg-brand-50 transition">
+              <i class="fa-solid fa-qrcode mr-1.5"></i> Generate Dynamic QR Code
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            ${renderStatCard('Department Students', deptStudentsCount, 'fa-user-graduate', 'bg-indigo-600')}
+            ${renderStatCard('Present Today', presentToday, 'fa-user-check', 'bg-emerald-600')}
+            ${renderStatCard('Total Department Logs', totalAttLogs, 'fa-list-check', 'bg-sky-600')}
+          </div>
+
+          ${renderFacultyInteractiveAttendanceWidget()}
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-4"><i class="fa-solid fa-chart-column mr-2 text-indigo-600"></i>Student Attendance Percentage Chart</h3>
+              <div class="h-64 relative"><canvas id="dashboardChart"></canvas></div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-4"><i class="fa-solid fa-chart-pie mr-2 text-indigo-600"></i>Status Distribution</h3>
+              <div class="h-64 relative flex items-center justify-center"><canvas id="doughnutChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHODDashboard() {
+      const deptStudentsCount = state.metrics?.totalStudents || (state.students ? state.students.length : 0);
+      const deptFacultyCount = state.metrics?.totalFaculty || (state.faculty ? state.faculty.length : 0);
+      const presentToday = state.metrics?.presentToday || 0;
+
+      return `
+        <div class="space-y-6">
+          ${renderLowAttendanceAlertWidget()}
+
+          <div class="bg-gradient-to-r from-rose-700 to-pink-800 text-white rounded-2xl p-6 shadow-xl">
+            <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase">HOD Executive Portal</span>
+            <h2 class="text-2xl font-extrabold mt-1">Department Executive Analytics</h2>
+            <p class="text-xs text-rose-100 mt-1">Department attendance audit, faculty performance & student metrics</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            ${renderStatCard('Department Students', deptStudentsCount, 'fa-user-graduate', 'bg-rose-600')}
+            ${renderStatCard('Department Faculty', deptFacultyCount, 'fa-chalkboard-user', 'bg-pink-600')}
+            ${renderStatCard('Present Today', presentToday, 'fa-user-check', 'bg-emerald-600')}
+          </div>
+
+          ${renderFacultyInteractiveAttendanceWidget()}
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-4">Department Attendance Overview</h3>
+              <div class="h-64 relative"><canvas id="dashboardChart"></canvas></div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-4">Status Distribution</h3>
+              <div class="h-64 relative flex items-center justify-center"><canvas id="doughnutChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminDashboard() {
+      return `
+        <div class="space-y-6">
+          ${renderLowAttendanceAlertWidget()}
+
+          <div class="bg-gradient-to-r from-brand-900 to-slate-900 text-white rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">Admin Portal</span>
+              <h2 class="text-2xl font-extrabold mt-1">System Executive Dashboard</h2>
+              <p class="text-xs text-brand-100 mt-1">Complete System Oversight & Management</p>
+            </div>
+            <button onclick="switchTab('qr-session')" class="px-5 py-2.5 rounded-xl bg-white text-brand-900 font-bold text-xs shadow-lg hover:bg-brand-50 transition">
+              <i class="fa-solid fa-qrcode mr-1.5"></i> Generate Dynamic QR Code
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            ${renderStatCard('Total Students', state.metrics?.totalStudents || (state.students ? state.students.length : 0), 'fa-user-graduate', 'bg-blue-600')}
+            ${renderStatCard('Total Faculty', state.metrics?.totalFaculty || 1, 'fa-chalkboard-user', 'bg-indigo-600')}
+            ${renderStatCard('Present Today', state.metrics?.presentToday || 0, 'fa-user-check', 'bg-emerald-600')}
+            ${renderStatCard('Total Logs', state.metrics?.totalAttendance || state.attendance.length, 'fa-list-check', 'bg-sky-600')}
+          </div>
+
+          ${renderFacultyInteractiveAttendanceWidget()}
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-4"><i class="fa-solid fa-chart-column mr-2 text-brand-600"></i>Student Attendance Percentage Chart</h3>
+              <div class="h-64 relative"><canvas id="dashboardChart"></canvas></div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-4"><i class="fa-solid fa-chart-pie mr-2 text-brand-600"></i>Status Distribution</h3>
+              <div class="h-64 relative flex items-center justify-center"><canvas id="doughnutChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStatCard(title, val, icon, colorBg) {
+      return `
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl ${colorBg} text-white flex items-center justify-center text-xl shadow-md">
+            <i class="fa-solid ${icon}"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">${title}</p>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white">${val}</h3>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStudentProgressWidget() {
+      const summary = state.summary || { overallPercentage: 100.0, totalAttended: 1, totalConducted: 1 };
+      const isRisk = summary.overallPercentage < 75;
+
+      return `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white">My Attendance Percentage</h3>
+              <p class="text-xs text-slate-500">Minimum 75% requirement for institutional exams</p>
+            </div>
+            <span class="text-2xl font-extrabold ${isRisk ? 'text-rose-600' : 'text-emerald-600'}">${summary.overallPercentage}%</span>
+          </div>
+
+          <div class="w-full bg-slate-100 dark:bg-slate-700 h-3.5 rounded-full overflow-hidden">
+            <div class="h-full ${isRisk ? 'bg-rose-500' : 'bg-emerald-500'} transition-all duration-500" style="width: ${summary.overallPercentage}%"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLowAttendanceAlertWidget() {
+      const alerts = state.alerts || [];
+      if (alerts.length === 0) return '';
+
+      const role = state.user?.role;
+
+      if (role === 'student') {
+        return `
+          <div class="space-y-3">
+            ${alerts.map(alt => `
+              <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center text-lg shadow-md flex-shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-xs sm:text-sm text-rose-900 dark:text-rose-100">⚠️ LOW ATTENDANCE WARNING: ${alt.subject}</h4>
+                    <p class="text-xs text-rose-700 dark:text-rose-300 mt-0.5">Your attendance in <strong>${alt.subject}</strong> is <strong>${alt.percentage}%</strong> (below 50% requirement). Student Name: <strong>${alt.student_name}</strong> | Student ID: <strong>${alt.roll_number}</strong> | Date/Time: <strong>${alt.date_time_formatted || new Date(alt.date_time).toLocaleString()}</strong></p>
+                  </div>
+                </div>
+                <span class="hidden sm:inline-block px-3 py-1 rounded-full text-[10px] uppercase font-extrabold bg-rose-600 text-white">Action Required</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      if (role === 'parent') {
+        return `
+          <div class="space-y-3">
+            ${alerts.map(alt => `
+              <div class="p-5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-700 text-white shadow-xl space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase"><i class="fa-solid fa-bell mr-1"></i> AUTOMATIC PARENT ALERT</span>
+                  <span class="text-xs font-medium text-rose-100">${alt.date_time_formatted || new Date(alt.date_time).toLocaleString()}</span>
+                </div>
+                <h3 class="text-lg font-bold">Low Attendance Alert for ${alt.student_name} (${alt.roll_number})</h3>
+                <p class="text-xs text-rose-100">Subject: <strong class="text-white">${alt.subject}</strong> | Attendance Percentage: <strong class="text-amber-200 text-sm font-extrabold">${alt.percentage}%</strong> (Below mandatory 50% threshold). Registered Parent Email: <strong>${alt.parent_email}</strong></p>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="bg-rose-50 dark:bg-rose-950/40 p-5 rounded-2xl border border-rose-200 dark:border-rose-800 space-y-3 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-xs sm:text-sm text-rose-900 dark:text-rose-200 flex items-center gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i> Low Attendance Alerts (< 50% Threshold)
+            </h4>
+            <span class="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-extrabold uppercase">${alerts.length} Active Alerts</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            ${alerts.map(alt => `
+              <div class="p-3.5 bg-white dark:bg-slate-800 rounded-xl border border-rose-200 dark:border-rose-700 shadow-sm flex items-center justify-between text-xs">
+                <div>
+                  <p class="font-bold text-slate-900 dark:text-white">${alt.student_name} <span class="text-slate-500 font-normal">(${alt.roll_number})</span></p>
+                  <p class="text-[11px] text-slate-500 mt-0.5">${alt.subject} &bull; <span class="font-bold text-rose-600 text-xs">${alt.percentage}%</span></p>
+                  <p class="text-[10px] text-slate-400 mt-0.5">Parent Email: ${alt.parent_email}</p>
+                </div>
+                <span class="px-2 py-1 rounded bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 text-[10px] font-extrabold uppercase">Low Attendance</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSubjectBreakdownWidget() {
+      const summaries = state.subjectSummaries || [];
+
+      return `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white"><i class="fa-solid fa-book-open mr-2 text-brand-600"></i>Subject-Wise Attendance Breakdown</h3>
+              <p class="text-xs text-slate-500">Attendance percentage calculated separately per course subject</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${summaries.length > 0 ? summaries.map(sub => `
+              <div class="p-4 rounded-xl border ${sub.isLowAttendance ? 'border-rose-300 bg-rose-50/50 dark:bg-rose-950/20' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750'} space-y-2 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs text-slate-900 dark:text-white truncate max-w-[160px]">${sub.subject}</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${sub.isLowAttendance ? 'bg-rose-600 text-white animate-pulse' : 'bg-emerald-100 text-emerald-800'}">
+                    ${sub.isLowAttendance ? '⚠️ < 50% Low' : 'Normal'}
+                  </span>
+                </div>
+                <div class="flex items-baseline justify-between pt-1">
+                  <span class="text-2xl font-extrabold ${sub.isLowAttendance ? 'text-rose-600' : 'text-emerald-600'}">${sub.percentage}%</span>
+                  <span class="text-xs text-slate-500 font-medium">${sub.attended} / ${sub.totalConducted} Lectures</span>
+                </div>
+                <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                  <div class="h-full ${sub.isLowAttendance ? 'bg-rose-500' : 'bg-emerald-500'}" style="width: ${sub.percentage}%"></div>
+                </div>
+              </div>
+            `).join('') : `<p class="text-xs text-slate-400 col-span-full">No subject records logged yet.</p>`}
+          </div>
+        </div>
+      `;
+    }
+
+    // INTERACTIVE FACULTY & ADMIN ATTENDANCE TABLE (SEARCH, DEPT, SEM, DATE FILTERS - NO SUBJECT)
+    function renderFacultyInteractiveAttendanceWidget() {
+      return `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white">Student Attendance Management</h3>
+              <p class="text-xs text-slate-500">Search student, filter by department, semester & date, mark Present/Absent</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                <input type="text" id="faculty-search-input" value="${state.searchQuery}" placeholder="Search student..." oninput="handleSearchChange(event)" class="pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              </div>
+
+              <select id="faculty-dept-filter" onchange="handleDeptFilterChange(event)" class="px-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white">
+                <option value="">All Depts</option>
+                <option value="Computer Science" ${state.filterDepartment === 'Computer Science' ? 'selected' : ''}>CS</option>
+                <option value="Information Technology" ${state.filterDepartment === 'Information Technology' ? 'selected' : ''}>IT</option>
+                <option value="Electrical Engineering" ${state.filterDepartment === 'Electrical Engineering' ? 'selected' : ''}>EE</option>
+                <option value="Mechanical Engineering" ${state.filterDepartment === 'Mechanical Engineering' ? 'selected' : ''}>ME</option>
+              </select>
+
+              <select id="faculty-sem-filter" onchange="handleSemFilterChange(event)" class="px-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white">
+                <option value="">All Semesters</option>
+                <option value="6" ${state.filterSemester === '6' ? 'selected' : ''}>Sem 6</option>
+                <option value="1" ${state.filterSemester === '1' ? 'selected' : ''}>Sem 1</option>
+                <option value="2" ${state.filterSemester === '2' ? 'selected' : ''}>Sem 2</option>
+                <option value="3" ${state.filterSemester === '3' ? 'selected' : ''}>Sem 3</option>
+                <option value="4" ${state.filterSemester === '4' ? 'selected' : ''}>Sem 4</option>
+                <option value="5" ${state.filterSemester === '5' ? 'selected' : ''}>Sem 5</option>
+                <option value="7" ${state.filterSemester === '7' ? 'selected' : ''}>Sem 7</option>
+                <option value="8" ${state.filterSemester === '8' ? 'selected' : ''}>Sem 8</option>
+              </select>
+
+              <select id="faculty-subject-select" onchange="handleSubjectSelectChange(event)" class="px-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white">
+                <option value="Data Structures" ${state.selectedSubject === 'Data Structures' ? 'selected' : ''}>Data Structures</option>
+                <option value="Database Systems" ${state.selectedSubject === 'Database Systems' ? 'selected' : ''}>Database Systems</option>
+                <option value="Operating Systems" ${state.selectedSubject === 'Operating Systems' ? 'selected' : ''}>Operating Systems</option>
+                <option value="Web Technologies" ${state.selectedSubject === 'Web Technologies' ? 'selected' : ''}>Web Technologies</option>
+                <option value="Computer Networks" ${state.selectedSubject === 'Computer Networks' ? 'selected' : ''}>Computer Networks</option>
+              </select>
+
+              <input type="date" id="faculty-date-filter" value="${state.filterDate}" onchange="handleDateFilterChange(event)" class="px-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
+
+              ${state.searchQuery || state.filterDepartment || state.filterSemester || state.filterDate ? `
+                <button onclick="clearFilters()" class="px-3 py-1.5 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300">Clear</button>
+              ` : ''}
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 font-semibold bg-slate-50 dark:bg-slate-800">
+                  <th class="py-3 px-3">Student ID</th>
+                  <th class="py-3 px-3">Student Name</th>
+                  <th class="py-3 px-3">Department</th>
+                  <th class="py-3 px-3">Date</th>
+                  <th class="py-3 px-3">Status</th>
+                  <th class="py-3 px-3">Attendance %</th>
+                  <th class="py-3 px-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                ${renderFacultyStudentAttendanceRows()}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFacultyStudentAttendanceRows() {
+      if (!state.students || state.students.length === 0) {
+        return `<tr><td colspan="7" class="py-4 text-center text-slate-400">No student records found.</td></tr>`;
+      }
+
+      let filteredStudents = state.students;
+      if (state.searchQuery) {
+        const q = state.searchQuery.toLowerCase();
+        filteredStudents = filteredStudents.filter(s => s.name.toLowerCase().includes(q) || s.roll_number.toLowerCase().includes(q));
+      }
+      if (state.filterDepartment) {
+        filteredStudents = filteredStudents.filter(s => s.department === state.filterDepartment);
+      }
+      if (state.filterSemester) {
+        filteredStudents = filteredStudents.filter(s => String(s.semester) === String(state.filterSemester));
+      }
+
+      const currentDate = state.filterDate || new Date().toISOString().split('T')[0];
+
+      return filteredStudents.map(s => {
+        const studentAtts = state.attendance.filter(a => a.raw_student_id === s.user_id || a.roll_number === s.roll_number);
+        const dateRecord = studentAtts.find(a => a.date === currentDate && (a.subject === (state.selectedSubject || 'Data Structures')));
+        
+        const attended = studentAtts.filter(a => a.status === 'PRESENT').length;
+        const total = studentAtts.length;
+        const pct = total > 0 ? ((attended / total) * 100).toFixed(1) : '100.0';
+
+        const currentStatus = dateRecord ? dateRecord.status : 'ABSENT';
+
+        const hasLowAtt = (state.alerts || []).some(a => a.student_id === s.user_id && a.status === 'ACTIVE');
+        const lowAttAlert = (state.alerts || []).find(a => a.student_id === s.user_id && a.status === 'ACTIVE');
+
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+            <td class="py-3 px-3 font-bold text-slate-900 dark:text-white">${s.roll_number}</td>
+            <td class="py-3 px-3 font-medium dark:text-slate-200">
+              ${s.name}
+              ${hasLowAtt ? `
+                <span title="Low Attendance in ${lowAttAlert?.subject} (${lowAttAlert?.percentage}%)" class="ml-1.5 px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-600 text-white shadow-sm inline-flex items-center gap-1 animate-pulse">
+                  <i class="fa-solid fa-triangle-exclamation"></i> Low Attendance (${lowAttAlert?.subject}: ${lowAttAlert?.percentage}%)
+                </span>
+              ` : ''}
+            </td>
+            <td class="py-3 px-3 text-slate-500">${s.department} (Sem ${s.semester})</td>
+            <td class="py-3 px-3 text-slate-500">${currentDate}</td>
+            <td class="py-3 px-3">
+              <span class="px-2.5 py-1 rounded-md text-[10px] font-bold ${currentStatus === 'PRESENT' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                ${currentStatus}
+              </span>
+            </td>
+            <td class="py-3 px-3 font-semibold ${parseFloat(pct) < 75 ? 'text-rose-600' : 'text-emerald-600'}">${pct}%</td>
+            <td class="py-3 px-3 text-right space-x-1">
+              <button onclick="markManualAttendance(${s.user_id}, 'PRESENT', '${currentDate}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold text-[11px] hover:bg-emerald-700">Present</button>
+              <button onclick="markManualAttendance(${s.user_id}, 'ABSENT', '${currentDate}')" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-semibold text-[11px] hover:bg-rose-700">Absent</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function handleSearchChange(e) {
+      state.searchQuery = e.target.value;
+      fetchDashboardData();
+    }
+
+    function handleDeptFilterChange(e) {
+      state.filterDepartment = e.target.value;
+      fetchDashboardData();
+    }
+
+    function handleSemFilterChange(e) {
+      state.filterSemester = e.target.value;
+      fetchDashboardData();
+    }
+
+    function handleSubjectSelectChange(e) {
+      state.selectedSubject = e.target.value;
+      fetchDashboardData();
+    }
+
+    function handleDateFilterChange(e) {
+      state.filterDate = e.target.value;
+      fetchDashboardData();
+    }
+
+    function clearFilters() {
+      state.searchQuery = '';
+      state.filterDepartment = '';
+      state.filterSemester = '';
+      state.filterDate = '';
+      fetchDashboardData();
+    }
+
+    async function markManualAttendance(student_id, status, date) {
+      const subject = state.selectedSubject || 'Data Structures';
+      const res = await apiRequest('/attendance/mark', 'POST', { student_id, status, date, subject });
+      if (res.success) {
+        fetchDashboardData();
+      } else {
+        alert(res.message);
+      }
+    }
+
+    // 5. USER MANAGEMENT PAGE (ADMIN FULL CONTROL)
+    function renderUserManagementPage() {
+      return `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white">Admin System User Management</h3>
+              <p class="text-xs text-slate-500">Manage all 5 system roles (Students, Faculty, Mentors, Parents, HODs)</p>
+            </div>
+            <button onclick="openAddUserModal()" class="px-4 py-2 rounded-xl bg-brand-700 text-white font-bold text-xs hover:bg-brand-800 shadow-md">
+              <i class="fa-solid fa-user-plus mr-1.5"></i> Add New User
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 font-semibold bg-slate-50 dark:bg-slate-800">
+                  <th class="py-3 px-3">ID</th>
+                  <th class="py-3 px-3">Name</th>
+                  <th class="py-3 px-3">Email</th>
+                  <th class="py-3 px-3">Role</th>
+                  <th class="py-3 px-3">Phone</th>
+                  <th class="py-3 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                ${(state.users || []).map(u => `
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <td class="py-3 px-3 font-bold text-slate-900 dark:text-white">#${u.id}</td>
+                    <td class="py-3 px-3 font-semibold dark:text-slate-200">${u.name}</td>
+                    <td class="py-3 px-3 text-slate-500">${u.email}</td>
+                    <td class="py-3 px-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-brand-100 text-brand-800 dark:bg-brand-900 dark:text-brand-300">${u.role}</span>
+                    </td>
+                    <td class="py-3 px-3 text-slate-500">${u.phone || 'N/A'}</td>
+                    <td class="py-3 px-3 text-right space-x-2">
+                      <button onclick="openEditUserModal(${u.id})" class="text-brand-600 hover:text-brand-800 font-semibold"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                      ${u.role !== 'admin' ? `<button onclick="deleteUserRecord(${u.id})" class="text-rose-500 hover:text-rose-700 font-semibold"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // 6. STUDENT ROSTER MANAGEMENT PAGE (ADMIN, FACULTY, MENTOR)
+    function renderStudentsPage() {
+      const canManage = ['admin', 'faculty', 'mentor'].includes(state.user.role);
+      const canDelete = ['admin', 'faculty'].includes(state.user.role);
+
+      return `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white">Student Roster Management</h3>
+              <p class="text-xs text-slate-500">Registered Students Roster</p>
+            </div>
+            ${canManage ? `
+              <button onclick="openAddStudentModal()" class="px-4 py-2 rounded-xl bg-brand-700 text-white font-bold text-xs hover:bg-brand-800 shadow-md">
+                <i class="fa-solid fa-plus mr-1"></i> Add Student
+              </button>
+            ` : ''}
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 font-semibold bg-slate-50 dark:bg-slate-800">
+                  <th class="py-3 px-3">Student ID</th>
+                  <th class="py-3 px-3">Name</th>
+                  <th class="py-3 px-3">Email</th>
+                  <th class="py-3 px-3">Department</th>
+                  <th class="py-3 px-3">Semester</th>
+                  <th class="py-3 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                ${state.students.map(s => `
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <td class="py-3 px-3 font-bold text-slate-900 dark:text-white">${s.roll_number}</td>
+                    <td class="py-3 px-3 font-medium dark:text-slate-200">${s.name}</td>
+                    <td class="py-3 px-3 text-slate-500">${s.email}</td>
+                    <td class="py-3 px-3 text-slate-500">${s.department}</td>
+                    <td class="py-3 px-3 text-slate-500">Sem ${s.semester}</td>
+                    <td class="py-3 px-3 text-right space-x-2">
+                      <button onclick="openEditUserModal(${s.user_id})" class="text-brand-600 hover:text-brand-800 font-semibold"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                      ${canDelete ? `<button onclick="deleteUserRecord(${s.user_id})" class="text-rose-500 hover:text-rose-700 font-semibold"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // 7. FACULTY DIRECTORY PAGE
+    function renderFacultyPage() {
+      return `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+          <div>
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Faculty Directory</h3>
+            <p class="text-xs text-slate-500">Registered Faculty Members</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 font-semibold bg-slate-50 dark:bg-slate-800">
+                  <th class="py-3 px-3">Emp Code</th>
+                  <th class="py-3 px-3">Name</th>
+                  <th class="py-3 px-3">Email</th>
+                  <th class="py-3 px-3">Department</th>
+                  <th class="py-3 px-3">Designation</th>
+                  ${state.user.role === 'admin' ? `<th class="py-3 px-3 text-right">Actions</th>` : ''}
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                ${state.faculty.map(f => `
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <td class="py-3 px-3 font-bold text-slate-900 dark:text-white">${f.employee_code}</td>
+                    <td class="py-3 px-3 font-medium dark:text-slate-200">${f.name}</td>
+                    <td class="py-3 px-3 text-slate-500">${f.email}</td>
+                    <td class="py-3 px-3 text-slate-500">${f.department}</td>
+                    <td class="py-3 px-3 text-slate-500">${f.designation}</td>
+                    ${state.user.role === 'admin' ? `
+                      <td class="py-3 px-3 text-right space-x-2">
+                        <button onclick="openEditUserModal(${f.user_id})" class="text-brand-600 font-semibold"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                        <button onclick="deleteUserRecord(${f.user_id})" class="text-rose-500 font-semibold"><i class="fa-solid fa-trash"></i> Delete</button>
+                      </td>
+                    ` : ''}
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // 8. ACADEMIC MODULES PAGE (DEPARTMENTS, SEMESTERS, CLASSES)
+    function renderAcademicModulesPage() {
+      return `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white"><i class="fa-solid fa-building-columns text-brand-600 mr-2"></i>Departments</h3>
+            <ul class="space-y-2 text-xs divide-y divide-slate-100 dark:divide-slate-700">
+              <li class="pt-2 flex justify-between"><span>Computer Science (CS)</span><span class="text-emerald-600 font-bold">Active</span></li>
+              <li class="pt-2 flex justify-between"><span>Information Technology (IT)</span><span class="text-emerald-600 font-bold">Active</span></li>
+              <li class="pt-2 flex justify-between"><span>Electrical Engineering (EE)</span><span class="text-emerald-600 font-bold">Active</span></li>
+              <li class="pt-2 flex justify-between"><span>Mechanical Engineering (ME)</span><span class="text-emerald-600 font-bold">Active</span></li>
+            </ul>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white"><i class="fa-solid fa-layer-group text-indigo-600 mr-2"></i>Semesters</h3>
+            <div class="grid grid-cols-4 gap-2 text-xs text-center">
+              ${[1,2,3,4,5,6,7,8].map(s => `<div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 font-bold">Sem ${s}</div>`).join('')}
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white"><i class="fa-solid fa-users text-sky-600 mr-2"></i>Class Sections</h3>
+            <div class="flex gap-2 text-xs">
+              <span class="flex-1 py-3 text-center rounded-xl bg-brand-50 text-brand-700 font-bold border border-brand-200">Section A</span>
+              <span class="flex-1 py-3 text-center rounded-xl bg-brand-50 text-brand-700 font-bold border border-brand-200">Section B</span>
+              <span class="flex-1 py-3 text-center rounded-xl bg-brand-50 text-brand-700 font-bold border border-brand-200">Section C</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 9. FACULTY CLASSROOM QR GENERATOR (NO SUBJECT SELECTOR)
+    function renderQRSessionPage() {
+      return `
+        <div class="max-w-xl mx-auto bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl space-y-6">
+          <div class="text-center space-y-1">
+            <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-700 mx-auto flex items-center justify-center text-xl font-bold">
+              <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <h3 class="font-bold text-lg text-slate-900 dark:text-white">Classroom Attendance QR Session</h3>
+            <p class="text-xs text-slate-500">Generate time-limited QR code for classroom student attendance scan</p>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Expiration Duration (1 to 10 Minutes)</label>
+              <select id="qr-duration" class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white">
+                <option value="5">5 Minutes (Standard Class Slot)</option>
+                <option value="1">1 Minute (Fast Test Slot)</option>
+                <option value="2">2 Minutes</option>
+                <option value="10">10 Minutes (Extended Slot)</option>
+              </select>
+            </div>
+
+            <button onclick="startQRSession()" class="w-full py-3 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-bold text-xs shadow-lg transition">
+              <i class="fa-solid fa-qrcode mr-2"></i> Generate Classroom QR Session
+            </button>
+          </div>
+
+          <div id="qr-display-container" class="hidden p-6 rounded-2xl border border-dashed border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 text-center space-y-4">
+            <div id="qr-image-holder" class="flex justify-center"></div>
+            <div>
+              <p id="qr-timer-text" class="text-sm font-bold text-brand-700 dark:text-brand-300 animate-pulse"></p>
+              <p id="qr-details-text" class="text-xs text-slate-500 dark:text-slate-400 mt-1"></p>
+            </div>
+            <button onclick="stopQRSession()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md">
+              <i class="fa-solid fa-stop mr-1.5"></i> End QR Session Now
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function startQRSession() {
+      const duration_minutes = parseInt(document.getElementById('qr-duration').value);
+
+      const res = await apiRequest('/qr/generate', 'POST', { duration_minutes });
+      if (res.success) {
+        state.activeQRSession = res.qrSession;
+        const container = document.getElementById('qr-display-container');
+        const holder = document.getElementById('qr-image-holder');
+        container.classList.remove('hidden');
+
+        holder.innerHTML = `<img src="${res.qrSession.qrImageURL}" class="w-64 h-64 rounded-xl shadow-md border bg-white p-2" />`;
+        document.getElementById('qr-details-text').innerText = `Session QR Token: ${res.qrSession.token}`;
+
+        state.qrSecondsLeft = duration_minutes * 60;
+        clearInterval(state.qrCountdownInterval);
+        state.qrCountdownInterval = setInterval(() => {
+          state.qrSecondsLeft--;
+          const mins = Math.floor(state.qrSecondsLeft / 60);
+          const secs = state.qrSecondsLeft % 60;
+          document.getElementById('qr-timer-text').innerText = `⏳ Session Expiration Countdown: ${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
+
+          if (state.qrSecondsLeft <= 0) {
+            clearInterval(state.qrCountdownInterval);
+            document.getElementById('qr-timer-text').innerText = '❌ QR Code Expired';
+          }
+        }, 1000);
+      } else {
+        alert(res.message);
+      }
+    }
+
+    async function stopQRSession() {
+      if (state.activeQRSession) {
+        await apiRequest('/qr/stop', 'POST', { qr_id: state.activeQRSession.id });
+        clearInterval(state.qrCountdownInterval);
+        document.getElementById('qr-display-container').classList.add('hidden');
+        alert('QR Session ended manually.');
+      }
+    }
+
+    // 10. DEDICATED QR SCAN ATTENDANCE PAGE FOR STUDENTS (DESKTOP & MOBILE SUPPORT)
+    function renderCameraQRScanPage() {
+      return `
+        <div class="max-w-lg mx-auto bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl space-y-5 text-center">
+          <div class="space-y-1">
+            <div class="w-14 h-14 rounded-2xl bg-brand-100 text-brand-700 mx-auto flex items-center justify-center text-2xl font-bold border border-brand-200">
+              <i class="fa-solid fa-camera"></i>
+            </div>
+            <h3 class="font-extrabold text-xl text-slate-900 dark:text-white">QR Code Attendance Scanner</h3>
+            <p class="text-xs text-slate-500">Scan classroom QR code with your webcam or mobile camera to mark attendance</p>
+          </div>
+
+          <!-- Camera Controls -->
+          <div class="flex justify-center gap-3">
+            <button id="btn-start-camera" onclick="startCameraScanner()" class="px-5 py-2.5 rounded-xl bg-brand-700 text-white font-bold text-xs hover:bg-brand-800 shadow-md flex items-center gap-2 transition">
+              <i class="fa-solid fa-video"></i> Start Camera Scanner
+            </button>
+            <button id="btn-stop-camera" onclick="stopCameraScanner()" class="px-5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 shadow-md flex items-center gap-2 transition hidden">
+              <i class="fa-solid fa-video-slash"></i> Stop Camera
+            </button>
+          </div>
+
+          <!-- HTML5 Camera Stream Viewport -->
+          <div class="p-2 border-2 border-dashed border-brand-500 rounded-2xl bg-slate-900 overflow-hidden relative min-h-[300px] flex items-center justify-center">
+            <div id="reader" class="w-full h-full min-h-[280px]"></div>
+          </div>
+
+          <!-- Real-time Scan Status Alert Display -->
+          <div id="scan-status-alert" class="hidden p-4 rounded-xl text-xs font-bold shadow-md transition-all"></div>
+
+          <!-- Manual Token Scan Fallback -->
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-700 text-left space-y-2">
+            <label class="block text-xs font-semibold text-slate-500">Manual Test Token Scan</label>
+            <div class="flex gap-2">
+              <input type="text" id="manual-token-input" placeholder="Paste active QR token..." class="flex-1 px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-brand-500" />
+              <button onclick="submitManualScan()" class="px-4 py-2 rounded-xl bg-brand-700 text-white font-bold text-xs hover:bg-brand-800">Scan Token</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function startCameraScanner() {
+      const alertBox = document.getElementById('scan-status-alert');
+      if (alertBox) alertBox.classList.add('hidden');
+
+      try {
+        if (state.html5QrCodeInstance && state.isScanning) {
+          await state.html5QrCodeInstance.stop();
+          state.isScanning = false;
+        }
+
+        if (!state.html5QrCodeInstance) {
+          state.html5QrCodeInstance = new Html5Qrcode("reader");
+        }
+
+        const startBtn = document.getElementById('btn-start-camera');
+        const stopBtn = document.getElementById('btn-stop-camera');
+        if (startBtn) startBtn.classList.add('hidden');
+        if (stopBtn) stopBtn.classList.remove('hidden');
+
+        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+          handleScannedToken(decodedText);
+        };
+
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        state.html5QrCodeInstance.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+          .then(() => {
+            state.isScanning = true;
+          })
+          .catch(async (err) => {
+            try {
+              const cameras = await Html5Qrcode.getCameras();
+              if (cameras && cameras.length > 0) {
+                await state.html5QrCodeInstance.start(cameras[0].id, config, qrCodeSuccessCallback);
+                state.isScanning = true;
+              } else {
+                showScanError('No camera detected on this device.');
+              }
+            } catch (e) {
+              showScanError('Camera permission denied or camera unavailable. Please allow camera access in browser.');
+            }
+          });
+      } catch (err) {
+        showScanError('Camera initialization error: ' + err.message);
+      }
+    }
+
+    async function stopCameraScanner() {
+      if (state.html5QrCodeInstance && state.isScanning) {
+        try {
+          await state.html5QrCodeInstance.stop();
+          state.isScanning = false;
+        } catch (e) {}
+      }
+      const startBtn = document.getElementById('btn-start-camera');
+      const stopBtn = document.getElementById('btn-stop-camera');
+      if (startBtn) startBtn.classList.remove('hidden');
+      if (stopBtn) stopBtn.classList.add('hidden');
+    }
+
+    function showScanError(msg) {
+      const alertBox = document.getElementById('scan-status-alert');
+      if (!alertBox) return;
+      alertBox.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-amber-100', 'text-amber-800');
+      alertBox.classList.add('bg-rose-100', 'text-rose-800', 'border', 'border-rose-300');
+      alertBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1.5 text-base"></i> ${msg}`;
+    }
+
+    async function handleScannedToken(qr_token) {
+      const res = await apiRequest('/qr/scan', 'POST', { qr_token });
+      const alertBox = document.getElementById('scan-status-alert');
+      if (!alertBox) return;
+
+      alertBox.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800', 'bg-amber-100', 'text-amber-800');
+
+      if (res.success) {
+        alertBox.classList.add('bg-emerald-100', 'text-emerald-800', 'border', 'border-emerald-300');
+        alertBox.innerHTML = `<i class="fa-solid fa-circle-check text-base mr-1.5"></i> Attendance Marked Successfully`;
+        fetchDashboardData();
+      } else if (res.message.includes('Already Marked')) {
+        alertBox.classList.add('bg-amber-100', 'text-amber-800', 'border', 'border-amber-300');
+        alertBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-base mr-1.5"></i> Attendance Already Marked Today`;
+      } else {
+        alertBox.classList.add('bg-rose-100', 'text-rose-800', 'border', 'border-rose-300');
+        alertBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-base mr-1.5"></i> ${res.message}`;
+      }
+    }
+
+    function submitManualScan() {
+      const tokenVal = document.getElementById('manual-token-input').value;
+      const targetToken = tokenVal || (state.activeQRSession ? state.activeQRSession.token : '');
+      handleScannedToken(targetToken);
+    }
+
+    // 11. ATTENDANCE RECORDS TABLE PAGE (EXACT REQUIRED COLUMNS)
+    function renderAttendanceRecordsPage() {
+      return `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white">Attendance Logs Table</h3>
+              <p class="text-xs text-slate-500">Official Student Attendance Log Records</p>
+            </div>
+            <button onclick="exportExcel()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-sm">
+              <i class="fa-solid fa-file-excel mr-1.5"></i> Export CSV Report
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold bg-slate-50 dark:bg-slate-700/50">
+                  <th class="py-3.5 px-3">Student ID</th>
+                  <th class="py-3.5 px-3">Student Name</th>
+                  <th class="py-3.5 px-3">Department</th>
+                  <th class="py-3.5 px-3">Semester</th>
+                  <th class="py-3.5 px-3">Date</th>
+                  <th class="py-3.5 px-3">Time</th>
+                  <th class="py-3.5 px-3">Status</th>
+                  <th class="py-3.5 px-3">QR Status</th>
+                  <th class="py-3.5 px-3">Attendance %</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                ${state.attendance.map(a => `
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <td class="py-3.5 px-3 font-bold text-slate-900 dark:text-white">${a.student_id}</td>
+                    <td class="py-3.5 px-3 font-semibold text-slate-800 dark:text-slate-200">${a.student_name}</td>
+                    <td class="py-3.5 px-3 text-slate-600 dark:text-slate-400">${a.department}</td>
+                    <td class="py-3.5 px-3 text-slate-600 dark:text-slate-400">Sem ${a.semester}</td>
+                    <td class="py-3.5 px-3 text-slate-600 dark:text-slate-400">${a.date}</td>
+                    <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">${a.time}</td>
+                    <td class="py-3.5 px-3">
+                      <span class="px-3 py-1 rounded-full text-[10px] font-extrabold ${a.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                        ${a.status}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-3 font-medium text-slate-700 dark:text-slate-300">
+                      <span class="inline-flex items-center gap-1.5">
+                        <i class="fa-solid ${a.qr_status === 'QR Scanned' ? 'fa-qrcode text-brand-600' : 'fa-pen-to-square text-amber-600'} text-xs"></i>
+                        ${a.qr_status}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-3 font-bold ${parseFloat(a.percentage) < 75 ? 'text-rose-600' : 'text-emerald-600'}">${a.percentage}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // 12. REPORTS & EXPORT PAGE (PDF & EXCEL)
+    function renderReportsPage() {
+      return `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white">Reports & Export Center</h3>
+              <p class="text-xs text-slate-500">Download formatted attendance reports in PDF & Excel formats</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-semibold hover:bg-slate-900"><i class="fa-solid fa-print mr-1"></i> Print PDF Report</button>
+              <button onclick="exportExcel()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"><i class="fa-solid fa-file-excel mr-1"></i> Export Excel CSV</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function exportExcel() {
+      window.location.href = '/api/reports/export-excel';
+    }
+
+    // MODAL HANDLERS
+    function openAddUserModal() {
+      document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-user-plus mr-2"></i>Add New User';
+      document.getElementById('modal-user-id').value = '';
+      document.getElementById('modal-name').value = '';
+      document.getElementById('modal-email').value = '';
+      document.getElementById('modal-phone').value = '';
+      document.getElementById('modal-roll').value = '';
+      document.getElementById('modal-password').value = '';
+      document.getElementById('user-modal').classList.remove('hidden');
+      toggleModalRoleFields();
+    }
+
+    function openAddStudentModal() {
+      openAddUserModal();
+      document.getElementById('modal-role').value = 'student';
+      toggleModalRoleFields();
+    }
+
+    function openEditUserModal(userId) {
+      const user = state.users.find(u => u.id === userId) || state.students.find(s => s.user_id === userId);
+      if (!user) return;
+
+      document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square mr-2"></i>Edit User Profile';
+      document.getElementById('modal-user-id').value = user.id || user.user_id;
+      document.getElementById('modal-name').value = user.name || '';
+      document.getElementById('modal-email').value = user.email || '';
+      document.getElementById('modal-phone').value = user.phone || '';
+      document.getElementById('modal-roll').value = user.roll_number || user.roleDetails?.roll_number || '';
+      document.getElementById('modal-role').value = user.role || 'student';
+      document.getElementById('user-modal').classList.remove('hidden');
+      toggleModalRoleFields();
+    }
+
+    function toggleModalRoleFields() {
+      const role = document.getElementById('modal-role').value;
+      const stFields = document.getElementById('modal-student-fields');
+      if (role === 'student') stFields.classList.remove('hidden');
+      else stFields.classList.add('hidden');
+    }
+
+    function closeUserModal() {
+      document.getElementById('user-modal').classList.add('hidden');
+      document.getElementById('modal-err-msg').classList.add('hidden');
+    }
+
+    async function handleUserFormSubmit(e) {
+      e.preventDefault();
+      const userId = document.getElementById('modal-user-id').value;
+      const role = document.getElementById('modal-role').value;
+      const name = document.getElementById('modal-name').value;
+      const email = document.getElementById('modal-email').value;
+      const phone = document.getElementById('modal-phone').value;
+      const roll_number = document.getElementById('modal-roll').value;
+      const department = document.getElementById('modal-dept').value;
+      const semester = document.getElementById('modal-sem').value;
+      const section = document.getElementById('modal-section').value;
+      const password = document.getElementById('modal-password').value;
+
+      let res;
+      if (userId) {
+        res = await apiRequest('/users/update', 'PUT', { user_id: userId, name, email, phone, roll_number, department, semester, section });
+      } else {
+        res = await apiRequest('/users/create', 'POST', { role, name, email, phone, roll_number, department, semester, section, password });
+      }
+
+      if (res.success) {
+        closeUserModal();
+        fetchDashboardData();
+      } else {
+        const errBox = document.getElementById('modal-err-msg');
+        errBox.classList.remove('hidden');
+        errBox.innerText = res.message;
+      }
+    }
+
+    async function deleteUserRecord(id) {
+      if (confirm('Are you sure you want to delete this user record?')) {
+        await apiRequest(`/users/${id}`, 'DELETE');
+        fetchDashboardData();
+      }
+    }
+
+    // CHATBOT CONTROLLERS
+    function toggleChatbot() {
+      document.getElementById('chat-window').classList.toggle('hidden');
+    }
+
+    function sendQuickChat(txt) {
+      document.getElementById('chat-input').value = txt;
+      handleChatSubmit(new Event('submit'));
+    }
+
+    async function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      const msgsBox = document.getElementById('chat-messages');
+      msgsBox.innerHTML += `
+        <div class="flex gap-2 justify-end">
+          <div class="bg-brand-700 text-white p-3 rounded-2xl rounded-tr-none shadow-sm max-w-[85%]">
+            ${msg}
+          </div>
+        </div>
+      `;
+
+      input.value = '';
+      msgsBox.scrollTop = msgsBox.scrollHeight;
+
+      let reply = '';
+      const text = msg.toLowerCase();
+      if (text.includes('percentage') || text.includes('attendance')) {
+        const pct = state.summary ? state.summary.overallPercentage : 100.0;
+        reply = ` Your current aggregate attendance is **${pct}%**. Minimum 75% requirement is mandatory.`;
+      } else if (text.includes('rule') || text.includes('criteria')) {
+        reply = `📋 **Institutional Rules**:\n1. Minimum 75% attendance required.\n2. QR codes expire within the specified duration.\n3. Duplicate attendance on the same day is prohibited.`;
+      } else {
+        reply = `Hello ${state.user ? state.user.name : ''}! I am your AI Attendance Assistant. How may I assist you with your attendance or role metrics today?`;
+      }
+
+      msgsBox.innerHTML += `
+        <div class="flex gap-2">
+          <div class="w-7 h-7 rounded-full bg-brand-700 text-white flex items-center justify-center text-xs flex-shrink-0">AI</div>
+          <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl rounded-tl-none border border-slate-200 dark:border-slate-700 shadow-sm max-w-[85%] text-slate-700 dark:text-slate-200">
+            ${reply.replace(/\n/g, '<br/>')}
+          </div>
+        </div>
+      `;
+      msgsBox.scrollTop = msgsBox.scrollHeight;
+    }
+
+    // CHART.JS INITIALIZER
+    function initCharts() {
+      if (!state.user) return;
+      const role = state.user.role;
+
+      if (window.myDashboardChartInstance) {
+        window.myDashboardChartInstance.destroy();
+        window.myDashboardChartInstance = null;
+      }
+      if (window.myDoughnutChartInstance) {
+        window.myDoughnutChartInstance.destroy();
+        window.myDoughnutChartInstance = null;
+      }
+
+      const ctx1 = document.getElementById('dashboardChart');
+      if (ctx1 && role !== 'student' && role !== 'parent') {
+        const studentList = state.students || [];
+        const labels = studentList.map(s => s.name);
+        const dataPct = studentList.map(s => {
+          const studentAtts = (state.attendance || []).filter(a => a.raw_student_id === s.user_id || a.roll_number === s.roll_number);
+          const attended = studentAtts.filter(a => a.status === 'PRESENT').length;
+          return studentAtts.length > 0 ? parseFloat(((attended / studentAtts.length) * 100).toFixed(1)) : 100;
+        });
+
+        window.myDashboardChartInstance = new Chart(ctx1, {
+          type: 'bar',
+          data: {
+            labels: labels.length > 0 ? labels : ['No Students'],
+            datasets: [{
+              label: 'Attendance %',
+              data: dataPct.length > 0 ? dataPct : [0],
+              backgroundColor: dataPct.map(p => p < 75 ? '#f43f5e' : '#2563eb'),
+              borderRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 100 } }
+          }
+        });
+      }
+
+      const ctx2 = document.getElementById('doughnutChart');
+      if (ctx2) {
+        let presentCount = 0;
+        let absentCount = 0;
+
+        if (role === 'student' || role === 'parent') {
+          const summary = state.summary || {};
+          presentCount = summary.totalAttended || 0;
+          absentCount = summary.totalAbsent || 0;
+          if (presentCount === 0 && absentCount === 0) {
+            presentCount = (state.attendance || []).filter(a => a.status === 'PRESENT').length;
+            absentCount = (state.attendance || []).filter(a => a.status === 'ABSENT').length;
+          }
+        } else {
+          presentCount = (state.attendance || []).filter(a => a.status === 'PRESENT').length;
+          absentCount = (state.attendance || []).filter(a => a.status === 'ABSENT').length;
+        }
+
+        window.myDoughnutChartInstance = new Chart(ctx2, {
+          type: 'doughnut',
+          data: {
+            labels: ['Present', 'Absent'],
+            datasets: [{
+              data: [presentCount, absentCount],
+              backgroundColor: ['#10b981', '#f43f5e']
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
+    }
+  </script>
+</body>
+</html>
