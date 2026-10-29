@@ -1,14 +1,17 @@
 {
-  "name": "smart-attendance-backend",
+  "name": "smart-attendance-system",
   "version": "1.0.0",
-  "description": "Backend API for Smart Attendance System Using QR Code & AI Chatbot",
-  "main": "server.js",
+  "description": "Smart Attendance System with QR Code Attendance & AI Chatbot",
+  "main": "backend/server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
-    "backup": "node db/createBackup.js",
-    "migrate:cloud": "node db/migrateToCloud.js"
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js",
+    "backup": "node backend/db/createBackup.js",
+    "migrate:cloud": "node backend/db/migrateToCloud.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
