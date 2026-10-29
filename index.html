@@ -14,14 +14,16 @@
         extend: {
           colors: {
             brand: {
-              50: '#eff6ff',
-              100: '#dbeafe',
-              200: '#bfdbfe',
-              500: '#3b82f6',
-              600: '#2563eb',
-              700: '#1d4ed8',
-              800: '#1e40af',
-              900: '#1e3a8a' // Deep Navy Blue
+              50:  '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'  // Deep Emerald
             }
           }
         }
@@ -47,9 +49,11 @@
     body { font-family: 'Inter', sans-serif; }
     .animate-pulse-glow { animation: pulseGlow 2s infinite; }
     @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 15px rgba(37, 99, 235, 0.4); }
-      50% { box-shadow: 0 0 25px rgba(37, 99, 235, 0.8); }
+      0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.9); }
     }
+    .emerald-gradient { background: linear-gradient(135deg, #064e3b 0%, #065f46 40%, #0f172a 100%); }
+    .card-glow:hover { box-shadow: 0 8px 32px rgba(16,185,129,0.18); transform: translateY(-2px); transition: all 0.2s; }
   </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen antialiased flex flex-col transition-colors duration-200">
@@ -154,6 +158,45 @@
     </div>
   </div>
 
+  <!-- PASSWORD CHANGE MODAL -->
+  <div id="password-change-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div class="bg-brand-900 text-white px-6 py-4 flex items-center justify-between">
+        <h3 id="pwd-modal-title" class="font-bold text-base"><i class="fa-solid fa-key mr-2"></i>Change Password</h3>
+        <button id="pwd-modal-close-btn" onclick="closePasswordChangeModal()" class="text-white/80 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="handlePasswordChangeSubmit(event)" class="p-6 space-y-4">
+        <div id="pwd-modal-notice" class="hidden p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs">
+          <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>
+          <strong>First Login Setup:</strong> For your security, you are required to change your temporary password before proceeding.
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Current Password *</label>
+          <input type="password" id="pwd-current" required placeholder="Enter current / temporary password" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-brand-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">New Password (min 6 characters) *</label>
+          <input type="password" id="pwd-new" required placeholder="Enter new strong password" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-brand-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Confirm New Password *</label>
+          <input type="password" id="pwd-confirm" required placeholder="Confirm new password" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-brand-500" />
+        </div>
+
+        <div id="pwd-modal-err" class="hidden p-2.5 rounded-xl bg-rose-100 border border-rose-300 text-rose-700 text-xs font-medium text-center"></div>
+        <div id="pwd-modal-succ" class="hidden p-2.5 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-700 text-xs font-medium text-center"></div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="pwd-cancel-btn" onclick="closePasswordChangeModal()" class="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300">Cancel</button>
+          <button type="submit" id="pwd-submit-btn" class="px-5 py-2 rounded-xl bg-brand-700 text-white text-xs font-bold shadow-md hover:bg-brand-800">Update Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- FLOATING AI CHATBOT WIDGET -->
   <div id="chatbot-container" class="hidden fixed bottom-5 right-5 z-50">
     <button onclick="toggleChatbot()" class="w-14 h-14 rounded-full bg-brand-700 hover:bg-brand-800 text-white flex items-center justify-center shadow-2xl animate-pulse-glow transition transform hover:scale-105">
@@ -227,27 +270,31 @@
       searchQuery: '',
       filterDepartment: '',
       filterSemester: '',
-      filterDate: ''
+      filterDate: '',
+      mentorAssignments: null
     };
 
     const API_BASE = '/api';
 
     // 6 Role Portals Metadata Definitions
     const ROLE_PORTALS = {
-      student: { name: 'Student Portal', icon: 'fa-user-graduate', bgFrom: 'from-blue-600', bgTo: 'to-blue-800', email: 'rahul@attendance.com' },
-      faculty: { name: 'Faculty Portal', icon: 'fa-chalkboard-user', bgFrom: 'from-indigo-600', bgTo: 'to-brand-900', email: 'rajesh@attendance.com' },
-      mentor:  { name: 'Mentor Portal', icon: 'fa-handshake', bgFrom: 'from-teal-600', bgTo: 'to-emerald-800', email: 'vikram@attendance.com' },
-      parent:  { name: 'Parent Portal', icon: 'fa-user-group', bgFrom: 'from-amber-600', bgTo: 'to-orange-800', email: 'sunita@attendance.com' },
-      hod:     { name: 'HOD Portal', icon: 'fa-building-columns', bgFrom: 'from-rose-600', bgTo: 'to-pink-900', email: 'suresh@attendance.com' },
-      admin:   { name: 'Admin Portal', icon: 'fa-user-gear', bgFrom: 'from-brand-800', bgTo: 'to-slate-900', email: 'admin' }
+      student: { name: 'Student Portal',  icon: 'fa-user-graduate',    bgFrom: 'from-emerald-600', bgTo: 'to-teal-800',    email: '101' },
+      faculty: { name: 'Faculty Portal',  icon: 'fa-chalkboard-user',  bgFrom: 'from-teal-600',    bgTo: 'to-emerald-900', email: 'rajesh' },
+      mentor:  { name: 'Mentor Portal',   icon: 'fa-handshake',        bgFrom: 'from-emerald-700', bgTo: 'to-slate-900',   email: 'vikram' },
+      parent:  { name: 'Parent Portal',   icon: 'fa-user-group',       bgFrom: 'from-amber-600',   bgTo: 'to-orange-800',  email: '101' },
+      hod:     { name: 'HOD Portal',      icon: 'fa-building-columns', bgFrom: 'from-teal-800',    bgTo: 'to-slate-900',   email: 'suresh' },
+      admin:   { name: 'Admin Portal',    icon: 'fa-user-gear',        bgFrom: 'from-emerald-900', bgTo: 'to-slate-900',   email: 'admin' }
     };
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       initTheme();
-      if (state.token) {
-        fetchCurrentUser();
-      } else {
-        renderPortalSelect();
+      const hasQrSession = await checkMobileQrScanUrl();
+      if (!hasQrSession) {
+        if (state.token) {
+          fetchCurrentUser();
+        } else {
+          renderPortalSelect();
+        }
       }
     });
 
@@ -286,78 +333,226 @@
     }
 
     async function fetchCurrentUser() {
-      const res = await apiRequest('/auth/me');
-      if (res.success) {
-        state.user = res.user;
-        document.getElementById('chatbot-container').classList.remove('hidden');
-        fetchDashboardData();
-      } else {
+      try {
+        const res = await apiRequest('/auth/me');
+        if (res && res.success && res.user) {
+          state.user = res.user;
+          const cb = document.getElementById('chatbot-container');
+          if (cb) cb.classList.remove('hidden');
+          await fetchDashboardData();
+          if (res.user && res.user.must_change_password) {
+            showPasswordChangeModal(true);
+          }
+        } else {
+          logout();
+        }
+      } catch (err) {
+        console.error('Error fetching current user:', err);
         logout();
       }
     }
 
     async function fetchDashboardData() {
-      if (!state.user) return;
+      if (!state.user) {
+        renderPortalSelect();
+        return;
+      }
 
-      const queryStr = [];
-      if (state.searchQuery) queryStr.push(`search=${encodeURIComponent(state.searchQuery)}`);
-      if (state.filterDepartment) queryStr.push(`department=${encodeURIComponent(state.filterDepartment)}`);
-      if (state.filterSemester) queryStr.push(`semester=${encodeURIComponent(state.filterSemester)}`);
-      if (state.filterDate) queryStr.push(`date=${encodeURIComponent(state.filterDate)}`);
-      const attUrl = `/attendance/list${queryStr.length ? '?' + queryStr.join('&') : ''}`;
+      const role = state.user.role;
 
-      const [metricsRes, attRes, stRes, facRes, alertsRes, notifRes, subjSumRes] = await Promise.all([
-        apiRequest('/reports/metrics'),
-        apiRequest(attUrl),
-        apiRequest('/students'),
-        apiRequest('/faculty'),
-        apiRequest('/alerts/low-attendance'),
-        apiRequest('/notifications/history'),
-        apiRequest('/attendance/subject-summary')
+      try {
+        // ── Role-based selective data loading ──────────────────────────────────
+        // Each role only fetches what it actually needs, reducing API calls.
+
+        if (role === 'parent') {
+          // Parent portal: only needs parent-specific endpoints
+          await fetchParentData();
+          renderApp();
+          return;
+        }
+
+        if (role === 'student') {
+          // Student: needs their own attendance + alerts + notifications + subject summary + timetable
+          const queryStr = [];
+          if (state.filterDate) queryStr.push(`date=${encodeURIComponent(state.filterDate)}`);
+          const attUrl = `/attendance/list${queryStr.length ? '?' + queryStr.join('&') : ''}`;
+          const [metricsRes, attRes, alertsRes, notifRes, subjSumRes, sumRes, ttRes] = await Promise.all([
+            apiRequest('/reports/metrics'),
+            apiRequest(attUrl),
+            apiRequest('/alerts/low-attendance'),
+            apiRequest('/notifications/history'),
+            apiRequest('/attendance/subject-summary'),
+            apiRequest('/attendance/summary'),
+            apiRequest('/timetable')
+          ]);
+          if (metricsRes && metricsRes.success) state.metrics = metricsRes.metrics;
+          if (attRes && attRes.success) state.attendance = attRes.attendance || [];
+          if (alertsRes && alertsRes.success) state.alerts = alertsRes.alerts || [];
+          if (notifRes && notifRes.success) state.notifications = notifRes.notifications || [];
+          if (subjSumRes && subjSumRes.success) state.subjectSummaries = subjSumRes.subjectSummaries || [];
+          if (sumRes && sumRes.success) state.summary = sumRes;
+          if (ttRes && ttRes.success) state.timetable = ttRes.timetable || [];
+          renderApp();
+          return;
+        }
+
+        if (role === 'admin') {
+          // Admin: needs everything including user management + mentor assignments + timetable
+          const queryStr = [];
+          if (state.searchQuery) queryStr.push(`search=${encodeURIComponent(state.searchQuery)}`);
+          if (state.filterDepartment) queryStr.push(`department=${encodeURIComponent(state.filterDepartment)}`);
+          if (state.filterSemester) queryStr.push(`semester=${encodeURIComponent(state.filterSemester)}`);
+          if (state.filterDate) queryStr.push(`date=${encodeURIComponent(state.filterDate)}`);
+          const attUrl = `/attendance/list${queryStr.length ? '?' + queryStr.join('&') : ''}`;
+          const [metricsRes, attRes, stRes, facRes, alertsRes, notifRes, subjSumRes, usersRes, mentorAssignRes, ttRes] = await Promise.all([
+            apiRequest('/reports/metrics'),
+            apiRequest(attUrl),
+            apiRequest('/students'),
+            apiRequest('/faculty'),
+            apiRequest('/alerts/low-attendance'),
+            apiRequest('/notifications/history'),
+            apiRequest('/attendance/subject-summary'),
+            apiRequest('/users'),
+            apiRequest('/mentor/assignments'),
+            apiRequest('/timetable')
+          ]);
+          if (metricsRes && metricsRes.success) state.metrics = metricsRes.metrics;
+          if (attRes && attRes.success) state.attendance = attRes.attendance || [];
+          if (stRes && stRes.success) state.students = stRes.students || [];
+          if (facRes && facRes.success) state.faculty = facRes.faculty || [];
+          if (alertsRes && alertsRes.success) state.alerts = alertsRes.alerts || [];
+          if (notifRes && notifRes.success) state.notifications = notifRes.notifications || [];
+          if (subjSumRes && subjSumRes.success) state.subjectSummaries = subjSumRes.subjectSummaries || [];
+          if (usersRes && usersRes.success) state.users = usersRes.users || [];
+          if (mentorAssignRes && mentorAssignRes.success) state.mentorAssignments = mentorAssignRes;
+          if (ttRes && ttRes.success) state.timetable = ttRes.timetable || [];
+          renderApp();
+          return;
+        }
+
+        if (role === 'hod') {
+          // HOD: needs department students, faculty, alerts, notifications, manual mentor allocation data & timetable
+          const queryStr = [];
+          if (state.searchQuery) queryStr.push(`search=${encodeURIComponent(state.searchQuery)}`);
+          if (state.filterDepartment) queryStr.push(`department=${encodeURIComponent(state.filterDepartment)}`);
+          if (state.filterSemester) queryStr.push(`semester=${encodeURIComponent(state.filterSemester)}`);
+          if (state.filterDate) queryStr.push(`date=${encodeURIComponent(state.filterDate)}`);
+          const attUrl = `/attendance/list${queryStr.length ? '?' + queryStr.join('&') : ''}`;
+          const [metricsRes, attRes, stRes, facRes, alertsRes, notifRes, subjSumRes, hodMentorRes, ttRes] = await Promise.all([
+            apiRequest('/reports/metrics'),
+            apiRequest(attUrl),
+            apiRequest('/students'),
+            apiRequest('/faculty'),
+            apiRequest('/alerts/low-attendance'),
+            apiRequest('/notifications/history'),
+            apiRequest('/attendance/subject-summary'),
+            apiRequest('/hod/mentor-assignments'),
+            apiRequest('/timetable')
+          ]);
+          if (metricsRes && metricsRes.success) state.metrics = metricsRes.metrics;
+          if (attRes && attRes.success) state.attendance = attRes.attendance || [];
+          if (stRes && stRes.success) state.students = stRes.students || [];
+          if (facRes && facRes.success) state.faculty = facRes.faculty || [];
+          if (alertsRes && alertsRes.success) state.alerts = alertsRes.alerts || [];
+          if (notifRes && notifRes.success) state.notifications = notifRes.notifications || [];
+          if (subjSumRes && subjSumRes.success) state.subjectSummaries = subjSumRes.subjectSummaries || [];
+          if (hodMentorRes && hodMentorRes.success) state.hodMentorData = hodMentorRes;
+          if (ttRes && ttRes.success) state.timetable = ttRes.timetable || [];
+          renderApp();
+          return;
+        }
+
+        // Faculty / Mentor: need students, attendance, alerts, notifications, timetable
+        {
+          const queryStr = [];
+          if (state.searchQuery) queryStr.push(`search=${encodeURIComponent(state.searchQuery)}`);
+          if (state.filterDepartment) queryStr.push(`department=${encodeURIComponent(state.filterDepartment)}`);
+          if (state.filterSemester) queryStr.push(`semester=${encodeURIComponent(state.filterSemester)}`);
+          if (state.filterDate) queryStr.push(`date=${encodeURIComponent(state.filterDate)}`);
+          const attUrl = `/attendance/list${queryStr.length ? '?' + queryStr.join('&') : ''}`;
+          const [metricsRes, attRes, stRes, facRes, alertsRes, notifRes, subjSumRes, ttRes] = await Promise.all([
+            apiRequest('/reports/metrics'),
+            apiRequest(attUrl),
+            apiRequest('/students'),
+            apiRequest('/faculty'),
+            apiRequest('/alerts/low-attendance'),
+            apiRequest('/notifications/history'),
+            apiRequest('/attendance/subject-summary'),
+            apiRequest('/timetable')
+          ]);
+          if (metricsRes && metricsRes.success) state.metrics = metricsRes.metrics;
+          if (attRes && attRes.success) state.attendance = attRes.attendance || [];
+          if (stRes && stRes.success) state.students = stRes.students || [];
+          if (facRes && facRes.success) state.faculty = facRes.faculty || [];
+          if (alertsRes && alertsRes.success) state.alerts = alertsRes.alerts || [];
+          if (notifRes && notifRes.success) state.notifications = notifRes.notifications || [];
+          if (subjSumRes && subjSumRes.success) state.subjectSummaries = subjSumRes.subjectSummaries || [];
+          if (ttRes && ttRes.success) state.timetable = ttRes.timetable || [];
+          renderApp();
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        renderApp();
+      }
+    }
+
+    async function fetchParentData() {
+      if (!state.user || state.user.role !== 'parent') return;
+
+      const [profRes, attRes, sumRes, subjRes, ttRes, ttTodayRes, alertsRes, notifRes, repRes] = await Promise.all([
+        apiRequest('/parent/profile'),
+        apiRequest('/parent/attendance'),
+        apiRequest('/parent/attendance/summary'),
+        apiRequest('/parent/attendance/subject-summary'),
+        apiRequest('/parent/timetable'),
+        apiRequest('/parent/timetable/today'),
+        apiRequest('/parent/alerts'),
+        apiRequest('/parent/notifications'),
+        apiRequest('/parent/reports')
       ]);
 
-      if (metricsRes.success) state.metrics = metricsRes.metrics;
-      if (attRes.success) state.attendance = attRes.attendance;
-      if (stRes.success) state.students = stRes.students;
-      if (facRes.success) state.faculty = facRes.faculty;
-      if (alertsRes.success) state.alerts = alertsRes.alerts || [];
-      if (notifRes.success) state.notifications = notifRes.notifications || [];
-      if (subjSumRes.success) state.subjectSummaries = subjSumRes.subjectSummaries || [];
-
-      if (state.user.role === 'admin') {
-        const usersRes = await apiRequest('/users');
-        if (usersRes.success) state.users = usersRes.users;
-      }
-
-      if (['student', 'parent'].includes(state.user.role)) {
-        const sumRes = await apiRequest('/attendance/summary');
-        if (sumRes.success) state.summary = sumRes;
-      }
-
-      renderApp();
+      state.parentData = {
+        profile: profRes.success ? profRes.student : {},
+        attendance: attRes.success ? attRes.attendance : [],
+        attendanceSummary: attRes.success ? attRes.summary : {},
+        summary: sumRes.success ? sumRes.summary : {},
+        subjects: subjRes.success ? subjRes.subjects : [],
+        timetable: ttRes.success ? ttRes.timetable : [],
+        todayClasses: ttTodayRes.success ? ttTodayRes.classes : [],
+        alerts: alertsRes.success ? alertsRes.alerts : [],
+        notifications: notifRes.success ? notifRes.notifications : [],
+        reports: repRes.success ? repRes.report : {}
+      };
     }
 
     function logout() {
-      stopCameraScanner();
+      try {
+        stopCameraScanner();
+      } catch (e) {}
       state.token = null;
       state.user = null;
+      state.parentData = null;
       state.selectedRolePortal = null;
       localStorage.removeItem('token');
-      document.getElementById('chatbot-container').classList.add('hidden');
+      const cb = document.getElementById('chatbot-container');
+      if (cb) cb.classList.add('hidden');
       renderPortalSelect();
     }
 
     // 1. PORTAL SELECTION LANDING HUB (6 PORTALS)
     function renderPortalSelect() {
       const appEl = document.getElementById('app');
+      if (!appEl) return;
+      const cb = document.getElementById('chatbot-container');
+      if (cb) cb.classList.add('hidden');
       appEl.innerHTML = `
-        <div class="flex-1 flex flex-col justify-center items-center p-6 bg-gradient-to-br from-brand-900 via-blue-900 to-slate-900 text-white relative overflow-hidden">
+        <div class="flex-1 flex flex-col justify-center items-center p-6 bg-gradient-to-br from-brand-900 via-teal-900 to-slate-900 text-white relative overflow-hidden">
           <div class="max-w-4xl w-full text-center space-y-3 mb-10">
             <div class="w-16 h-16 rounded-2xl bg-brand-600 mx-auto flex items-center justify-center text-3xl shadow-2xl shadow-brand-500/40 border border-white/20">
               <i class="fa-solid fa-graduation-cap"></i>
             </div>
             <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Smart Attendance System</h1>
-            <p class="text-xs sm:text-sm text-blue-200 max-w-xl mx-auto font-medium">Government Engineering College | Select Role Portal to Login</p>
+            <p class="text-xs sm:text-sm text-emerald-200 max-w-xl mx-auto font-medium">Government Engineering College | Select Role Portal to Login</p>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl w-full">
@@ -387,10 +582,22 @@
 
     // 2. DEDICATED ROLE LOGIN SCREENS
     function renderRoleLoginScreen() {
-      const portal = ROLE_PORTALS[state.selectedRolePortal || 'student'];
+      const portal = ROLE_PORTALS[state.selectedRolePortal || 'student'] || ROLE_PORTALS.student;
       const appEl = document.getElementById('app');
+      if (!appEl) return;
+      const cb = document.getElementById('chatbot-container');
+      if (cb) cb.classList.add('hidden');
 
       const isDefaultAdmin = state.selectedRolePortal === 'admin';
+      const isParent = state.selectedRolePortal === 'parent';
+
+      const idLabel = isParent ? 'Student ID' : 'Username / Email';
+      const idPlaceholder = isParent ? 'Enter Student ID' : 'user@attendance.com';
+      const idDefaultValue = isParent ? '' : (isDefaultAdmin ? 'admin' : portal.email);
+
+      const passLabel = isParent ? 'Parent Password' : 'Password';
+      const passPlaceholder = isParent ? 'Enter Parent Password' : '••••••••';
+      const passDefaultValue = isParent ? '' : (isDefaultAdmin ? 'admin123' : 'password123');
 
       appEl.innerHTML = `
         <div class="flex-1 flex items-center justify-center p-4 bg-gradient-to-br ${portal.bgFrom} ${portal.bgTo} text-white">
@@ -404,30 +611,30 @@
                 <i class="fa-solid ${portal.icon}"></i>
               </div>
               <h2 class="text-2xl font-extrabold tracking-tight">${portal.name}</h2>
-              <p class="text-xs text-slate-400">Enter authorized credentials for ${state.selectedRolePortal.toUpperCase()} access.</p>
+              <p class="text-xs text-slate-400">${isParent ? 'Enter Student ID & Parent Password for parent access.' : `Enter authorized credentials for ${state.selectedRolePortal.toUpperCase()} access.`}</p>
             </div>
 
             <form onsubmit="handleRoleLoginSubmit(event)" class="space-y-4">
               <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Username / Email</label>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">${idLabel}</label>
                 <div class="relative">
-                  <i class="fa-solid fa-user absolute left-3.5 top-3 text-slate-500 text-xs"></i>
-                  <input type="text" id="login-identity" required value="${isDefaultAdmin ? 'admin' : portal.email}" class="w-full pl-10 pr-4 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                  <i class="fa-solid ${isParent ? 'fa-id-card' : 'fa-user'} absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+                  <input type="text" id="login-identity" required value="${idDefaultValue}" placeholder="${idPlaceholder}" class="w-full pl-10 pr-4 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
                 </div>
               </div>
 
               <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">${passLabel}</label>
                 <div class="relative">
                   <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-500 text-xs"></i>
-                  <input type="password" id="login-password" required value="${isDefaultAdmin ? 'admin123' : 'password123'}" class="w-full pl-10 pr-4 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                  <input type="password" id="login-password" required value="${passDefaultValue}" placeholder="${passPlaceholder}" class="w-full pl-10 pr-4 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
                 </div>
               </div>
 
               <div id="login-error-msg" class="hidden p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs text-center font-medium"></div>
 
-              <button type="submit" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-lg transition transform hover:-translate-y-0.5">
-                Sign In to ${portal.name}
+              <button id="login-submit-btn" type="submit" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-lg transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                ${isParent ? 'Sign In to Parent Portal' : `Sign In to ${portal.name}`}
               </button>
             </form>
           </div>
@@ -437,23 +644,741 @@
 
     async function handleRoleLoginSubmit(e) {
       e.preventDefault();
-      const identity = document.getElementById('login-identity').value;
-      const password = document.getElementById('login-password').value;
+      const identityEl = document.getElementById('login-identity');
+      const passwordEl = document.getElementById('login-password');
+      const errBox = document.getElementById('login-error-msg');
+      const btn = document.getElementById('login-submit-btn');
+      if (errBox) errBox.classList.add('hidden');
+
+      const originalBtnHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Verifying credentials...</span>';
+      }
+
+      const identity = identityEl ? identityEl.value.trim() : '';
+      const password = passwordEl ? passwordEl.value : '';
       const role = state.selectedRolePortal;
 
-      const res = await apiRequest('/auth/login', 'POST', { username: identity, email: identity, password, role });
-      const errBox = document.getElementById('login-error-msg');
+      try {
+        let res;
+        if (role === 'parent') {
+          res = await apiRequest('/parent/login', 'POST', { student_id: identity, password });
+        } else {
+          res = await apiRequest('/auth/login', 'POST', { username: identity, email: identity, password, role });
+        }
 
-      if (res.success) {
-        state.token = res.token;
-        state.user = res.user;
-        localStorage.setItem('token', res.token);
-        document.getElementById('chatbot-container').classList.remove('hidden');
-        fetchDashboardData();
-      } else {
-        errBox.classList.remove('hidden');
-        errBox.innerText = res.message || 'Invalid credentials';
+        if (res && res.success) {
+          state.token = res.token;
+          state.user = res.user;
+          state.currentTab = 'dashboard';
+          localStorage.setItem('token', res.token);
+          if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span>Access Granted! Opening Portal...</span>';
+          }
+          const cb = document.getElementById('chatbot-container');
+          if (cb) cb.classList.remove('hidden');
+          await fetchDashboardData();
+          if (res.user && res.user.must_change_password) {
+            showPasswordChangeModal(true);
+          }
+        } else {
+          if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            btn.innerHTML = originalBtnHtml;
+          }
+          if (errBox) {
+            errBox.classList.remove('hidden');
+            errBox.innerText = (res && res.message) ? res.message : (role === 'parent' ? 'Invalid Student ID or Parent Password.' : 'Invalid credentials provided.');
+          }
+        }
+      } catch (err) {
+        console.error('Role login submit error:', err);
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('opacity-75', 'cursor-not-allowed');
+          btn.innerHTML = originalBtnHtml;
+        }
+        if (errBox) {
+          errBox.classList.remove('hidden');
+          errBox.innerText = 'Server error during login. Please try again.';
+        }
       }
+    }
+
+    // 2.5 DEDICATED PARENT PORTAL APP (DARK NAVY + BLUE + ORANGE ACCENT)
+    function renderParentPortalApp() {
+      const appEl = document.getElementById('app');
+      const pData = state.parentData || {};
+      const prof = pData.profile || {};
+      const childName = prof.name || 'Rahul Sharma';
+      const childRoll = prof.roll_number || 'STU101';
+      const childDept = prof.department || 'Computer Science';
+      const childSem = prof.semester || 6;
+
+      const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+
+      appEl.innerHTML = `
+        <div class="flex-1 flex overflow-hidden bg-slate-950 text-slate-100 font-sans">
+          <!-- PARENT PORTAL SIDEBAR -->
+          <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col flex-shrink-0 hidden md:flex shadow-2xl">
+            <div class="p-5 border-b border-slate-800 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-orange-500 text-slate-950 flex items-center justify-center font-black text-xl shadow-lg shadow-orange-500/20">
+                <i class="fa-solid fa-users-between-lines"></i>
+              </div>
+              <div>
+                <h2 class="font-extrabold text-sm leading-tight text-white">Smart Attendance</h2>
+                <p class="text-[11px] text-orange-400 font-bold uppercase tracking-wider">Parent Portal</p>
+              </div>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
+              ${renderParentNavBtn('dashboard', 'fa-gauge-high', 'Dashboard')}
+              ${renderParentNavBtn('parent-my-child', 'fa-child', 'My Child')}
+              ${renderParentNavBtn('parent-attendance', 'fa-calendar-check', 'Attendance')}
+              ${renderParentNavBtn('parent-timetable', 'fa-calendar-days', 'Time Table')}
+              ${renderParentNavBtn('parent-alerts', 'fa-triangle-exclamation', 'Attendance Alerts')}
+              ${renderParentNavBtn('parent-notifications', 'fa-bell', 'Notifications')}
+              ${renderParentNavBtn('parent-reports', 'fa-file-invoice', 'Reports')}
+            </nav>
+
+            <div class="p-4 border-t border-slate-800 space-y-3 bg-slate-950/60">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-orange-500 text-slate-950 font-black flex items-center justify-center text-sm">
+                  ${state.user?.name ? state.user.name.charAt(0) : 'P'}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-bold truncate text-white">${state.user?.name || 'Parent'}</p>
+                  <span class="inline-block px-1.5 py-0.5 rounded text-[10px] uppercase font-extrabold bg-orange-950 text-orange-400 border border-orange-800">PARENT</span>
+                </div>
+              </div>
+              <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
+                <button onclick="logout()" class="text-rose-400 hover:text-rose-300 font-semibold transition flex items-center gap-1">
+                  <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <!-- MAIN CONTENT VIEWPORT -->
+          <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-950">
+            <header class="h-16 bg-slate-900 border-b border-slate-800 px-6 flex items-center justify-between flex-shrink-0 shadow-md">
+              <div class="flex items-center gap-3">
+                <button onclick="document.querySelector('aside').classList.toggle('hidden')" class="md:hidden text-slate-300">
+                  <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <h1 class="text-lg font-extrabold text-white tracking-wide">
+                  Welcome, Parent
+                </h1>
+              </div>
+
+              <div class="flex items-center gap-4 text-xs">
+                <div class="hidden sm:flex items-center gap-3 bg-slate-800/80 px-3.5 py-1.5 rounded-xl border border-slate-700">
+                  <span class="text-slate-300 font-medium">Student: <strong class="text-orange-400">${childName} (${childRoll})</strong></span>
+                  <span class="text-slate-600">|</span>
+                  <span class="text-slate-300">${childDept} (Sem ${childSem})</span>
+                  <span class="text-slate-600">|</span>
+                  <span class="text-blue-400 font-semibold">${todayStr}</span>
+                </div>
+                <button onclick="logout()" class="text-xs text-rose-400 font-bold hover:underline flex items-center gap-1">
+                  <i class="fa-solid fa-power-off"></i> Exit
+                </button>
+              </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 space-y-6">
+              ${renderParentTabContent()}
+            </main>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderParentNavBtn(tab, icon, label) {
+      const active = state.currentTab === tab || (state.currentTab === 'dashboard' && tab === 'dashboard');
+      return `
+        <button onclick="switchTab('${tab}')" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition ${
+          active 
+            ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-slate-950 font-extrabold shadow-lg shadow-orange-500/20' 
+            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+        }">
+          <i class="fa-solid ${icon} text-sm"></i>
+          <span>${label}</span>
+        </button>
+      `;
+    }
+
+    function renderParentTabContent() {
+      const tab = state.currentTab;
+      switch (tab) {
+        case 'dashboard':
+        case 'parent-dashboard':
+          return renderNewParentDashboard();
+        case 'parent-my-child':
+          return renderParentMyChildPage();
+        case 'parent-attendance':
+          return renderParentAttendancePage();
+        case 'parent-timetable':
+          return renderParentTimeTablePage();
+        case 'parent-alerts':
+          return renderParentAlertsPage();
+        case 'parent-notifications':
+          return renderParentNotificationsPage();
+        case 'parent-reports':
+          return renderParentReportsPage();
+        default:
+          return renderNewParentDashboard();
+      }
+    }
+
+    function renderNewParentDashboard() {
+      const pData = state.parentData || {};
+      const prof = pData.profile || {};
+      const sum = pData.summary || pData.attendanceSummary || {};
+      const subjects = pData.subjects || [];
+      const todayClasses = pData.todayClasses || [];
+      const alerts = pData.alerts || [];
+
+      const childName = prof.name || 'Rahul Sharma';
+      const childRoll = prof.roll_number || 'STU101';
+      const childDept = prof.department || 'Computer Science';
+      const childSem = prof.semester || 6;
+      const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+      const overallPct = (sum.overallPercentage !== undefined && sum.overallPercentage !== null) ? parseFloat(sum.overallPercentage) : 0.0;
+      const presentCount = sum.present !== undefined ? sum.present : 0;
+      const absentCount = sum.absent !== undefined ? sum.absent : 0;
+      const totalClasses = sum.totalClasses !== undefined ? sum.totalClasses : 0;
+
+      const lowAttSubjects = subjects.filter(s => s.isLowAttendance || parseFloat(s.percentage) < 50.0);
+
+      const radius = 36;
+      const circumference = 2 * Math.PI * radius;
+      const strokeDashoffset = circumference - (overallPct / 100) * circumference;
+
+      return `
+        <div class="space-y-6">
+          <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-wrap items-center justify-between gap-4">
+            <div class="space-y-1">
+              <span class="inline-block px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 text-[11px] font-black uppercase tracking-wider">
+                Logged-In Student Overview
+              </span>
+              <h2 class="text-2xl font-black text-white">${childName}</h2>
+              <p class="text-xs text-slate-400">
+                Student ID: <strong class="text-orange-400 font-bold">${childRoll}</strong> &bull; ${childDept} &bull; Semester ${childSem} &bull; <span class="text-blue-400 font-semibold">${todayStr}</span>
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button onclick="switchTab('parent-reports')" class="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-slate-950 font-black text-xs shadow-lg transition">
+                <i class="fa-solid fa-file-invoice mr-1.5"></i> View Reports
+              </button>
+            </div>
+          </div>
+
+          ${lowAttSubjects.map(sub => `
+            <div class="bg-gradient-to-r from-rose-950/90 via-red-900/60 to-slate-900 border border-rose-700/80 rounded-2xl p-5 shadow-xl flex items-center gap-4 text-rose-100">
+              <div class="w-12 h-12 rounded-2xl bg-rose-600/30 border border-rose-500/50 flex items-center justify-center text-rose-400 text-2xl flex-shrink-0 animate-pulse">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] uppercase font-black bg-rose-600 text-white">LOW ATTENDANCE</span>
+                  <h4 class="font-extrabold text-sm text-white">${sub.subject} (${sub.percentage})</h4>
+                </div>
+                <p class="text-xs text-rose-200 mt-1">
+                  Attendance Alert: ${childName}'s attendance in ${sub.subject} is ${sub.percentage}. Attendance is below the required 50%.
+                </p>
+              </div>
+              <button onclick="switchTab('parent-alerts')" class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex-shrink-0">
+                Details
+              </button>
+            </div>
+          `).join('')}
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg flex items-center justify-between">
+              <div>
+                <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Overall Attendance</p>
+                <h3 class="text-3xl font-black ${overallPct < 50 ? 'text-rose-500' : overallPct < 75 ? 'text-amber-400' : 'text-emerald-400'} mt-1">
+                  ${overallPct.toFixed(1)}%
+                </h3>
+                <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold ${overallPct < 50 ? 'bg-rose-950 text-rose-400 border border-rose-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
+                  ${overallPct < 50 ? 'Low Standing' : 'Good Standing'}
+                </span>
+              </div>
+              <div class="relative w-20 h-20 flex items-center justify-center">
+                <svg class="w-20 h-20 transform -rotate-90">
+                  <circle cx="40" cy="40" r="${radius}" stroke="currentColor" stroke-width="7" class="text-slate-800" fill="transparent" />
+                  <circle cx="40" cy="40" r="${radius}" stroke="currentColor" stroke-width="7" class="${overallPct < 50 ? 'text-rose-500' : overallPct < 75 ? 'text-amber-400' : 'text-emerald-400'}" fill="transparent" stroke-dasharray="${circumference}" stroke-dashoffset="${strokeDashoffset}" stroke-linecap="round" />
+                </svg>
+                <span class="absolute text-[11px] font-black text-white">${Math.round(overallPct)}%</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg flex items-center justify-between">
+              <div>
+                <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Present</p>
+                <h3 class="text-3xl font-black text-emerald-400 mt-1">${presentCount}</h3>
+                <p class="text-[11px] text-slate-500 mt-2">Classes Attended</p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg flex items-center justify-between">
+              <div>
+                <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Absent</p>
+                <h3 class="text-3xl font-black text-rose-500 mt-1">${absentCount}</h3>
+                <p class="text-[11px] text-slate-500 mt-2">Classes Missed</p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-user-xmark"></i>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg flex items-center justify-between">
+              <div>
+                <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Total Classes</p>
+                <h3 class="text-3xl font-black text-blue-400 mt-1">${totalClasses}</h3>
+                <p class="text-[11px] text-slate-500 mt-2">Conducted to Date</p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-chalkboard-user"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm font-bold">
+                  <i class="fa-solid fa-calendar-day"></i>
+                </div>
+                <div>
+                  <h3 class="font-extrabold text-base text-white">Today's Classes</h3>
+                  <p class="text-xs text-slate-400">Scheduled lectures for today</p>
+                </div>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-blue-950 text-blue-300 border border-blue-800 text-xs font-bold uppercase">
+                ${new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              ${todayClasses.length > 0 ? todayClasses.map((cls, idx) => `
+                <div class="p-4 rounded-2xl ${idx === 0 ? 'bg-gradient-to-br from-blue-900/60 to-slate-900 border-2 border-blue-500/80 shadow-lg' : 'bg-slate-950 border border-slate-800'} space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold ${idx === 0 ? 'text-orange-400' : 'text-slate-400'}">
+                      <i class="fa-regular fa-clock mr-1"></i>${cls.start_time} - ${cls.end_time}
+                    </span>
+                    ${idx === 0 ? '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-blue-600 text-white uppercase">Upcoming</span>' : ''}
+                  </div>
+                  <h4 class="font-extrabold text-sm text-white">${cls.subject}</h4>
+                  <div class="text-xs text-slate-400 space-y-0.5">
+                    <p><i class="fa-solid fa-user-tie text-slate-500 mr-1.5"></i>${cls.faculty_name || 'Faculty Member'}</p>
+                    <p><i class="fa-solid fa-location-dot text-slate-500 mr-1.5"></i>${cls.room || 'Room 204'}</p>
+                  </div>
+                </div>
+              `).join('') : `
+                <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div class="flex items-center justify-between text-xs text-orange-400 font-bold">
+                    <span>10:00 AM - 11:00 AM</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] bg-blue-600 text-white font-black uppercase">Upcoming</span>
+                  </div>
+                  <h4 class="font-extrabold text-sm text-white">Data Structures</h4>
+                  <p class="text-xs text-slate-400">Prof. Rajesh Patel &bull; Room 204</p>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div class="flex items-center justify-between text-xs text-slate-400 font-bold">
+                    <span>11:00 AM - 12:00 PM</span>
+                  </div>
+                  <h4 class="font-extrabold text-sm text-white">Operating System</h4>
+                  <p class="text-xs text-slate-400">Prof. Amit Shah &bull; Room 301</p>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div class="flex items-center justify-between text-xs text-slate-400 font-bold">
+                    <span>12:00 PM - 01:00 PM</span>
+                  </div>
+                  <h4 class="font-extrabold text-sm text-white">Computer Networks</h4>
+                  <p class="text-xs text-slate-400">Prof. Vikram Singh &bull; Room 105</p>
+                </div>
+              `}
+            </div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="font-extrabold text-base text-white flex items-center gap-2">
+                <i class="fa-solid fa-book-open text-orange-400"></i> Subject-Wise Attendance Breakdown
+              </h3>
+              <span class="text-xs text-slate-400">Threshold: 50%</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${subjects.length > 0 ? subjects.map(sub => {
+                const isLow = sub.isLowAttendance || (sub.totalClasses > 0 && parseFloat(sub.percentage) < 50.0);
+                return `
+                  <div class="p-5 rounded-2xl ${isLow ? 'bg-rose-950/40 border border-rose-800/80' : 'bg-slate-950 border border-slate-800'} space-y-3">
+                    <div class="flex items-center justify-between">
+                      <h4 class="font-bold text-sm text-white">${sub.subject}</h4>
+                      ${isLow ? '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-600 text-white uppercase animate-pulse">LOW ATTENDANCE</span>' : ''}
+                    </div>
+                    <div class="flex items-baseline justify-between">
+                      <span class="text-2xl font-black ${isLow ? 'text-rose-400' : 'text-emerald-400'}">${sub.percentage}</span>
+                      <span class="text-xs text-slate-400">${sub.present} / ${sub.totalClasses} Present</span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                      <div class="h-full rounded-full ${isLow ? 'bg-rose-500' : 'bg-emerald-500'}" style="width: ${sub.percentage}"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('') : `
+                <div class="col-span-full py-6 text-center text-slate-500 text-xs italic">
+                  No subject attendance records recorded yet. All subject percentages are at 0%.
+                </div>
+              `}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderParentMyChildPage() {
+      const pData = state.parentData || {};
+      const prof = pData.profile || {};
+
+      return `
+        <div class="max-w-4xl mx-auto space-y-6">
+          <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+            <div class="flex items-center gap-4 border-b border-slate-800 pb-5">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 text-slate-950 font-black text-3xl flex items-center justify-center shadow-lg">
+                ${(prof.name || 'Rahul').charAt(0)}
+              </div>
+              <div>
+                <h2 class="text-2xl font-black text-white">${prof.name || 'Rahul Sharma'}</h2>
+                <p class="text-xs text-orange-400 font-bold">Student ID: ${prof.roll_number || 'STU101'} &bull; Roll Number: 101</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
+              <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1">
+                <span class="text-slate-500 font-semibold uppercase">Department</span>
+                <p class="text-sm font-bold text-white">${prof.department || 'Computer Science'}</p>
+              </div>
+              <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1">
+                <span class="text-slate-500 font-semibold uppercase">Semester & Section</span>
+                <p class="text-sm font-bold text-white">Semester ${prof.semester || 6} &bull; Section ${prof.section || 'A'}</p>
+              </div>
+              <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1">
+                <span class="text-slate-500 font-semibold uppercase">Student Email</span>
+                <p class="text-sm font-bold text-white">${prof.email || 'rahul@attendance.com'}</p>
+              </div>
+              <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1">
+                <span class="text-slate-500 font-semibold uppercase">Assigned Academic Mentor</span>
+                <p class="text-sm font-bold text-white">${prof.mentor_name || 'Dr. Vikram Singh'}</p>
+                <p class="text-[11px] text-slate-400">${prof.mentor_email || 'vikram@attendance.com'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderParentAttendancePage() {
+      const pData = state.parentData || {};
+      const logs = pData.attendance || [];
+      const sum = pData.attendanceSummary || pData.summary || {};
+
+      return `
+        <div class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-extrabold text-white">Child Attendance Records</h2>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl text-center">
+              <p class="text-[11px] text-slate-400 uppercase font-semibold">Overall Attendance</p>
+              <h4 class="text-2xl font-black text-orange-400 mt-1">${(sum.overallPercentage !== undefined && sum.overallPercentage !== null) ? sum.overallPercentage : '0.0%'}</h4>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl text-center">
+              <p class="text-[11px] text-slate-400 uppercase font-semibold">Present</p>
+              <h4 class="text-2xl font-black text-emerald-400 mt-1">${sum.present !== undefined ? sum.present : 0}</h4>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl text-center">
+              <p class="text-[11px] text-slate-400 uppercase font-semibold">Absent</p>
+              <h4 class="text-2xl font-black text-rose-400 mt-1">${sum.absent !== undefined ? sum.absent : 0}</h4>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl text-center">
+              <p class="text-[11px] text-slate-400 uppercase font-semibold">Total Classes</p>
+              <h4 class="text-2xl font-black text-blue-400 mt-1">${sum.totalClasses !== undefined ? sum.totalClasses : 0}</h4>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+            <div class="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+              <h3 class="font-bold text-sm text-white">Attendance Logs</h3>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-950 text-slate-400 uppercase font-bold text-[10px] border-b border-slate-800">
+                  <tr>
+                    <th class="px-5 py-3.5">Date</th>
+                    <th class="px-5 py-3.5">Subject</th>
+                    <th class="px-5 py-3.5">Status</th>
+                    <th class="px-5 py-3.5">Time</th>
+                    <th class="px-5 py-3.5">Attendance %</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 font-medium">
+                  ${(logs && logs.length > 0) ? logs.map(log => `
+                    <tr class="hover:bg-slate-800/40">
+                      <td class="px-5 py-3.5 text-white font-bold">${log.date}</td>
+                      <td class="px-5 py-3.5 text-white">${log.subject}</td>
+                      <td class="px-5 py-3.5">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${log.status === 'PRESENT' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'}">
+                          ${log.status}
+                        </span>
+                      </td>
+                      <td class="px-5 py-3.5 text-slate-400">${log.time}</td>
+                      <td class="px-5 py-3.5 font-bold ${parseFloat(log.percentage) < 50 ? 'text-rose-400' : 'text-emerald-400'}">${log.percentage}</td>
+                    </tr>
+                  `).join('') : `
+                    <tr>
+                      <td colspan="5" class="px-5 py-8 text-center text-slate-500 italic">No attendance records found. Overall attendance is 0.0%.</td>
+                    </tr>
+                  `}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderParentTimeTablePage() {
+      const pData = state.parentData || {};
+      const tt = pData.timetable || [];
+
+      const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+      const timeSlots = [
+        '08:00 AM - 09:00 AM',
+        '09:00 AM - 10:00 AM',
+        '10:00 AM - 11:00 AM',
+        '11:00 AM - 12:00 PM',
+        '12:00 PM - 01:00 PM'
+      ];
+
+      return `
+        <div class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-extrabold text-white">Student Time Table</h2>
+            <span class="text-xs text-orange-400 font-bold">Weekly Schedule</span>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-950 text-slate-400 uppercase font-black text-[10px] border-b border-slate-800">
+                  <tr>
+                    <th class="px-4 py-3.5 border-r border-slate-800 w-36">Time</th>
+                    ${days.map(d => `<th class="px-4 py-3.5 border-r border-slate-800">${d}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800 text-slate-200">
+                  ${timeSlots.map(slot => {
+                    const [sTime, eTime] = slot.split(' - ');
+                    return `
+                      <tr>
+                        <td class="px-4 py-3 bg-slate-950 font-bold text-orange-400 border-r border-slate-800 whitespace-nowrap">
+                          ${slot}
+                        </td>
+                        ${days.map(d => {
+                          const item = tt.find(t => t.day === d && t.start_time === sTime);
+                          if (item && item.subject !== 'Break') {
+                            return `
+                              <td class="px-3 py-3 border-r border-slate-800 bg-slate-900/80 hover:bg-slate-800">
+                                <p class="font-extrabold text-white">${item.subject}</p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">${item.faculty_name}</p>
+                                <span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-950 text-blue-300 border border-blue-800">${item.room || 'Room 204'}</span>
+                              </td>
+                            `;
+                          } else if (item && item.subject === 'Break') {
+                            return `<td class="px-3 py-3 border-r border-slate-800 bg-slate-950 text-center text-slate-600 font-bold text-[10px]">Break</td>`;
+                          } else {
+                            return `
+                              <td class="px-3 py-3 border-r border-slate-800 bg-slate-950/40 text-center">
+                                <span class="text-xs text-slate-600">—</span>
+                              </td>
+                            `;
+                          }
+                        }).join('')}
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderParentAlertsPage() {
+      const pData = state.parentData || {};
+      const alerts = pData.alerts || [];
+
+      return `
+        <div class="space-y-6 max-w-4xl mx-auto">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> Attendance Alerts
+            </h2>
+          </div>
+
+          <div class="space-y-4">
+            ${(alerts && alerts.length > 0) ? alerts.map(alt => `
+              <div class="bg-gradient-to-r from-rose-950/80 via-slate-900 to-slate-900 border border-rose-800 p-5 rounded-2xl shadow-xl flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-rose-600/30 text-rose-400 flex items-center justify-center text-2xl flex-shrink-0 mt-1">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="space-y-1 flex-1">
+                  <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded text-[10px] font-black bg-rose-600 text-white uppercase">LOW ATTENDANCE</span>
+                    <span class="text-xs text-slate-400">${alt.created_at || 'Today'}</span>
+                  </div>
+                  <p class="text-sm font-extrabold text-white mt-1">${alt.message}</p>
+                  <p class="text-xs text-rose-300">Subject: <strong class="text-white">${alt.subject}</strong> | Attendance %: <strong class="text-rose-400 font-bold">${alt.percentage}%</strong></p>
+                </div>
+              </div>
+            `).join('') : `
+              <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center space-y-2">
+                <div class="w-12 h-12 rounded-full bg-emerald-950 text-emerald-400 mx-auto flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h4 class="font-bold text-sm text-slate-200">No Low Attendance Alerts</h4>
+                <p class="text-xs text-slate-400">Attendance is currently in normal standing.</p>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderParentNotificationsPage() {
+      const pData = state.parentData || {};
+      const notifs = pData.notifications || [];
+
+      return `
+        <div class="space-y-6 max-w-4xl mx-auto">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+              <i class="fa-solid fa-bell text-orange-400"></i> Notifications
+            </h2>
+          </div>
+
+          <div class="space-y-3">
+            ${(notifs && notifs.length > 0) ? notifs.map(n => `
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center text-lg flex-shrink-0">
+                  <i class="fa-solid fa-bell"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-bold text-sm text-white">${n.title || 'Notification'}</h4>
+                  <p class="text-xs text-slate-300 mt-0.5">${n.message}</p>
+                  <p class="text-[10px] text-slate-500 mt-1">${n.created_at}</p>
+                </div>
+              </div>
+            `).join('') : `
+              <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center text-slate-400 text-xs italic">
+                No notifications received yet.
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderParentReportsPage() {
+      const pData = state.parentData || {};
+      const rep = pData.reports || {};
+      const prof = pData.profile || {};
+
+      return `
+        <div class="space-y-6 max-w-4xl mx-auto">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+              <i class="fa-solid fa-file-invoice text-orange-400"></i> Parent Reports
+            </h2>
+            <div class="flex gap-2">
+              <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-slate-950 font-black text-xs shadow-lg transition">
+                <i class="fa-solid fa-print mr-1.5"></i> Print Report
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-2xl space-y-6">
+            <div class="border-b border-slate-800 pb-4">
+              <h3 class="text-lg font-bold text-white">Smart Attendance System - Parent Summary Report</h3>
+              <p class="text-xs text-slate-400">Student: ${prof.name || 'Rahul Sharma'} (${prof.roll_number || 'STU101'}) &bull; Department: ${prof.department || 'Computer Science'}</p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+              <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                <p class="text-[10px] text-slate-400 uppercase font-semibold">Overall Attendance</p>
+                <h4 class="text-2xl font-black text-orange-400 mt-1">${(rep.overallPercentage !== undefined && rep.overallPercentage !== null) ? rep.overallPercentage : '0.0%'}</h4>
+              </div>
+              <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                <p class="text-[10px] text-slate-400 uppercase font-semibold">Total Classes</p>
+                <h4 class="text-2xl font-black text-white mt-1">${rep.totalClasses !== undefined ? rep.totalClasses : 0}</h4>
+              </div>
+              <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                <p class="text-[10px] text-slate-400 uppercase font-semibold">Present</p>
+                <h4 class="text-2xl font-black text-emerald-400 mt-1">${rep.presentClasses !== undefined ? rep.presentClasses : 0}</h4>
+              </div>
+              <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                <p class="text-[10px] text-slate-400 uppercase font-semibold">Absent</p>
+                <h4 class="text-2xl font-black text-rose-400 mt-1">${rep.absentClasses !== undefined ? rep.absentClasses : 0}</h4>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <h4 class="font-bold text-sm text-white">Subject Summary</h4>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                  <thead class="bg-slate-950 text-slate-400 uppercase font-bold text-[10px] border-b border-slate-800">
+                    <tr>
+                      <th class="px-4 py-2.5">Subject</th>
+                      <th class="px-4 py-2.5">Total Classes</th>
+                      <th class="px-4 py-2.5">Present</th>
+                      <th class="px-4 py-2.5">Absent</th>
+                      <th class="px-4 py-2.5">Percentage</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800">
+                    ${(rep.subjectSummary && rep.subjectSummary.length > 0) ? rep.subjectSummary.map(s => `
+                      <tr>
+                        <td class="px-4 py-3 text-white font-bold">${s.subject}</td>
+                        <td class="px-4 py-3 text-slate-300">${s.total || 0}</td>
+                        <td class="px-4 py-3 text-emerald-400 font-bold">${s.present || 0}</td>
+                        <td class="px-4 py-3 text-rose-400 font-bold">${s.absent || 0}</td>
+                        <td class="px-4 py-3 font-bold ${parseFloat(s.percentage || '0') < 50 ? 'text-rose-400' : 'text-emerald-400'}">${s.percentage || '0.0%'}</td>
+                      </tr>
+                    `).join('') : `
+                      <tr>
+                        <td colspan="5" class="px-4 py-4 text-center text-slate-500 italic">No subject attendance records recorded yet. All subjects at 0%.</td>
+                      </tr>
+                    `}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     // 3. MAIN PROTECTED APPLICATION CONTROLLER
@@ -461,6 +1386,11 @@
       const appEl = document.getElementById('app');
       if (!state.user) {
         renderPortalSelect();
+        return;
+      }
+
+      if (state.user.role === 'parent') {
+        renderParentPortalApp();
         return;
       }
 
@@ -490,7 +1420,11 @@
               ${['faculty', 'admin'].includes(state.user.role) ? renderNavBtn('qr-session', 'fa-qrcode', 'QR Generator') : ''}
               ${state.user.role === 'student' ? renderNavBtn('qr-scan', 'fa-camera', 'Scan Attendance QR') : ''}
 
+              ${state.user.role === 'admin' ? renderNavBtn('mentor-assignments', 'fa-people-arrows', 'Mentor Assignments') : ''}
+              ${state.user.role === 'hod' ? renderNavBtn('hod-mentor-allocation', 'fa-people-arrows', 'Mentor Allocation') : ''}
               ${renderNavBtn('attendance-records', 'fa-table-list', 'Attendance Table')}
+              ${renderNavBtn('timetable', 'fa-calendar-days', 'Time Table')}
+              ${['parent', 'faculty', 'mentor', 'hod', 'admin'].includes(state.user.role) ? renderNavBtn('low-attendance-alerts', 'fa-triangle-exclamation', state.user.role === 'parent' ? 'Attendance Alerts' : 'Low Attendance Alerts') : ''}
               ${['admin', 'parent', 'student', 'faculty', 'mentor', 'hod'].includes(state.user.role) ? renderNavBtn('notification-history', 'fa-bell', 'Notification History') : ''}
               ${renderNavBtn('reports', 'fa-file-export', 'Export Reports')}
             </nav>
@@ -498,11 +1432,11 @@
             <div class="p-4 border-t border-brand-800 space-y-3 bg-brand-950/40">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-full bg-brand-600 text-white font-bold flex items-center justify-center text-sm border border-brand-400">
-                  ${state.user.name.charAt(0)}
+                  ${state.user?.name ? state.user.name.charAt(0) : 'U'}
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-xs font-semibold truncate text-white">${state.user.name}</p>
-                  <span class="inline-block px-1.5 py-0.5 rounded text-[10px] uppercase font-extrabold bg-brand-800 text-brand-100">${state.user.role}</span>
+                  <p class="text-xs font-semibold truncate text-white">${state.user?.name || 'User'}</p>
+                  <span class="inline-block px-1.5 py-0.5 rounded text-[10px] uppercase font-extrabold bg-brand-800 text-brand-100">${state.user?.role || ''}</span>
                 </div>
               </div>
 
@@ -531,6 +1465,11 @@
               </div>
 
               <div class="flex items-center gap-4">
+                ${state.user.role === 'student' ? `
+                  <button onclick="showPasswordChangeModal(false)" class="px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-brand-300 font-bold text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-key"></i> Change Password
+                  </button>
+                ` : ''}
                 <span class="hidden sm:inline-block px-3 py-1 rounded-full text-xs font-bold bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-slate-600">
                   Portal: <span class="uppercase">${state.user.role}</span>
                 </span>
@@ -579,6 +1518,8 @@
 
       if (tab === 'user-management' && role !== 'admin') return renderAccessDenied();
       if (tab === 'academic-modules' && role !== 'admin') return renderAccessDenied();
+      if (tab === 'mentor-assignments' && role !== 'admin') return renderAccessDenied();
+      if (tab === 'hod-mentor-allocation' && !['hod', 'admin'].includes(role)) return renderAccessDenied();
       if (tab === 'students' && !['admin', 'faculty', 'mentor', 'hod'].includes(role)) return renderAccessDenied();
       if (tab === 'faculty' && !['admin', 'hod'].includes(role)) return renderAccessDenied();
       if (tab === 'qr-session' && !['faculty', 'admin'].includes(role)) return renderAccessDenied();
@@ -587,12 +1528,16 @@
       switch (tab) {
         case 'dashboard': return renderRoleDashboard();
         case 'user-management': return renderUserManagementPage();
+        case 'mentor-assignments': return renderMentorAssignmentsPage();
+        case 'hod-mentor-allocation': return renderHODMentorAllocationPage();
         case 'students': return renderStudentsPage();
         case 'faculty': return renderFacultyPage();
         case 'academic-modules': return renderAcademicModulesPage();
         case 'qr-session': return renderQRSessionPage();
         case 'qr-scan': return renderCameraQRScanPage();
         case 'attendance-records': return renderAttendanceRecordsPage();
+        case 'timetable': return renderTimeTablePage();
+        case 'low-attendance-alerts': return renderLowAttendanceAlertsPage();
         case 'notification-history': return renderNotificationHistoryPage();
         case 'reports': return renderReportsPage();
         default: return renderRoleDashboard();
@@ -624,8 +1569,10 @@
     }
 
     function renderStudentDashboard() {
-      const summary = state.summary || { overallPercentage: 100.0, totalAttended: 0, totalConducted: 0, totalAbsent: 0 };
+      const summary = state.summary || { overallPercentage: 0.0, totalAttended: 0, totalConducted: 0, totalAbsent: 0 };
       const isRisk = summary.overallPercentage < 75;
+
+      setTimeout(() => updateLiveAttendanceWidget(), 50);
 
       return `
         <div class="space-y-6">
@@ -637,9 +1584,24 @@
               <h2 class="text-2xl font-extrabold mt-1">Welcome back, ${state.user.name}!</h2>
               <p class="text-xs text-blue-100 mt-1">Smart Attendance System | My Attendance Dashboard</p>
             </div>
-            <button onclick="switchTab('qr-scan')" class="px-5 py-2.5 rounded-xl bg-white text-brand-900 font-bold text-xs shadow-lg hover:bg-brand-50 transition">
-              <i class="fa-solid fa-camera mr-1.5"></i> Scan QR Attendance
+            <button onclick="updateLiveAttendanceWidget()" class="px-5 py-2.5 rounded-xl bg-white text-brand-900 font-bold text-xs shadow-lg hover:bg-brand-50 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-arrows-rotate"></i> Refresh Live QR
             </button>
+          </div>
+
+          <!-- LIVE ATTENDANCE QR WIDGET (FETCHED FROM BACKEND ACTIVE FACULTY SESSION) -->
+          <div id="live-attendance-container" class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-qrcode text-brand-600"></i> Today's Live Attendance QR Session
+              </h3>
+              <button onclick="updateLiveAttendanceWidget()" class="text-xs text-brand-600 dark:text-brand-400 font-bold hover:underline flex items-center gap-1">
+                <i class="fa-solid fa-arrows-rotate"></i> Refresh QR
+              </button>
+            </div>
+            <div id="live-attendance-widget" class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl text-white space-y-4 text-center backdrop-blur-xl">
+              <p class="text-xs text-slate-400">Loading active classroom QR session...</p>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -700,11 +1662,146 @@
       `;
     }
 
+    async function updateLiveAttendanceWidget() {
+      const widgetEl = document.getElementById('live-attendance-widget');
+      if (!widgetEl) return;
+
+      const res = await apiRequest('/qr/active');
+      if (!res.success || !res.has_active_session) {
+        widgetEl.innerHTML = `
+          <div class="p-6 rounded-2xl bg-slate-800/60 border border-slate-700/60 text-center space-y-2">
+            <div class="w-12 h-12 rounded-2xl bg-slate-700 text-slate-400 mx-auto flex items-center justify-center text-xl">
+              <i class="fa-solid fa-clock-slash shadow-inner"></i>
+            </div>
+            <h3 class="font-bold text-sm text-slate-300">No active attendance session.</h3>
+            <p class="text-xs text-slate-500">When your faculty generates a classroom QR session, it will automatically appear here for attendance.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const session = res;
+      state.activeFacultySession = session;
+
+      const isAlreadyMarked = (state.attendance || []).some(a => 
+        a.student_id === state.user.id && (a.session_id === session.session_id || a.subject === session.subject)
+      );
+
+      const qrImg = session.qrImageURL || session.qrSession?.qrImageURL || session.session?.qrImageURL || '';
+
+      widgetEl.innerHTML = `
+        <div class="space-y-4 max-w-md mx-auto">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="text-left">
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+                LIVE ATTENDANCE
+              </span>
+              <h3 class="text-xl font-extrabold text-white mt-1">${session.subject || 'Data Structures'}</h3>
+              <p class="text-xs text-slate-400">Faculty: ${session.faculty_name || 'Prof. Rajesh Patel'}</p>
+            </div>
+            <div class="text-right">
+              <span class="px-2.5 py-1 rounded-full bg-emerald-500 text-slate-950 font-black text-[11px] flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-slate-950 animate-ping"></span> 🟢 Session Active
+              </span>
+            </div>
+          </div>
+
+          <!-- DISPLAY THE FACULTY QR CODE IMAGE -->
+          <div class="p-4 bg-white rounded-2xl inline-block shadow-xl border border-slate-700">
+            <img src="${qrImg}" alt="Live Faculty QR Code" class="w-64 h-64 mx-auto rounded-xl" />
+            <p class="text-[11px] font-bold text-slate-700 mt-2">Classroom Attendance Session QR</p>
+          </div>
+
+          <div class="flex items-center justify-center gap-2 text-xs font-bold text-amber-400 bg-amber-500/10 py-2 rounded-xl border border-amber-500/20">
+            <i class="fa-solid fa-hourglass-half text-sm"></i>
+            <span>Expires in: <strong id="student-qr-timer" class="font-mono text-sm">--:--</strong></span>
+          </div>
+
+          <div id="student-attendance-result-box">
+            ${isAlreadyMarked ? `
+              <div class="p-4 rounded-2xl bg-blue-500/20 border border-blue-500/40 text-blue-200 text-xs space-y-1">
+                <p class="text-sm font-extrabold text-white">✓ Attendance Already Recorded</p>
+                <p class="text-[11px] opacity-90">Your attendance is marked PRESENT for this session.</p>
+              </div>
+            ` : `
+              <button onclick="markStudentLiveAttendance('${session.session_id}')" class="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-sm shadow-xl transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-check text-lg"></i> MARK MY ATTENDANCE
+              </button>
+            `}
+          </div>
+        </div>
+      `;
+
+      startStudentLiveTimer(session.expires_at || session.valid_until);
+    }
+
+    function startStudentLiveTimer(expiresAt) {
+      clearInterval(state.studentTimerInterval);
+      state.studentTimerInterval = setInterval(() => {
+        const now = new Date();
+        const expiry = new Date(expiresAt);
+        const diffSecs = Math.floor((expiry - now) / 1000);
+
+        const timerEl = document.getElementById('student-qr-timer');
+        if (diffSecs <= 0) {
+          clearInterval(state.studentTimerInterval);
+          if (timerEl) timerEl.innerText = 'Expired';
+          updateLiveAttendanceWidget();
+        } else if (timerEl) {
+          const mins = Math.floor(diffSecs / 60);
+          const secs = diffSecs % 60;
+          timerEl.innerText = `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+      }, 1000);
+    }
+
+    async function markStudentLiveAttendance(sessionId) {
+      const res = await apiRequest('/qr/mark-attendance', 'POST', { session_id: sessionId });
+      const resultBox = document.getElementById('student-attendance-result-box');
+
+      if (res.success) {
+        if (resultBox) {
+          resultBox.innerHTML = `
+            <div class="p-5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-left text-xs space-y-3 shadow-xl">
+              <div class="flex items-center gap-2 text-emerald-400 font-black text-sm border-b border-emerald-500/30 pb-2">
+                <i class="fa-solid fa-circle-check text-xl"></i> Attendance Marked Successfully
+              </div>
+              <div class="space-y-1.5 font-medium">
+                <div class="flex justify-between"><span class="text-slate-400">Student:</span><strong class="text-white">${res.details?.student_name || state.user.name}</strong></div>
+                <div class="flex justify-between"><span class="text-slate-400">Subject:</span><strong class="text-white">${res.details?.subject || 'Data Structures'}</strong></div>
+                <div class="flex justify-between"><span class="text-slate-400">Time:</span><strong class="text-white">${res.details?.time || new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</strong></div>
+                <div class="flex justify-between items-center pt-1"><span class="text-slate-400">Status:</span><span class="px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-black text-[11px] uppercase">PRESENT</span></div>
+              </div>
+            </div>
+          `;
+        }
+        fetchDashboardData();
+      } else if (res.message && res.message.toLowerCase().includes('already marked')) {
+        if (resultBox) {
+          resultBox.innerHTML = `
+            <div class="p-4 rounded-2xl bg-blue-500/20 border border-blue-500/40 text-blue-200 text-xs space-y-1">
+              <p class="text-sm font-extrabold text-white">✓ Attendance Already Recorded</p>
+              <p class="text-[11px] opacity-90">${res.message}</p>
+            </div>
+          `;
+        }
+      } else {
+        if (resultBox) {
+          resultBox.innerHTML = `
+            <div class="p-4 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs space-y-1">
+              <p class="text-sm font-extrabold text-white">❌ Attendance QR Expired</p>
+              <p class="text-[11px] opacity-90">${res.message}</p>
+            </div>
+          `;
+        }
+      }
+    }
+
     function renderParentDashboard() {
       const parentObj = (state.parents || []).find(p => p.user_id === state.user.id);
       const childUserId = parentObj ? parentObj.student_user_id : null;
       const child = (state.students || []).find(s => s.user_id === childUserId) || (state.students || [])[0] || {};
-      const summary = state.summary || { overallPercentage: 100.0, totalAttended: 0, totalConducted: 0, totalAbsent: 0 };
+      const summary = state.summary || { overallPercentage: 0.0, totalAttended: 0, totalConducted: 0, totalAbsent: 0 };
       const isRisk = summary.overallPercentage < 75;
 
       const childName = child.name || 'Your Child';
@@ -756,9 +1853,13 @@
     }
 
     function renderMentorDashboard() {
+      const MENTOR_CAPACITY = 20;
       const menteeCount = state.students ? state.students.length : 0;
       const presentToday = state.metrics?.presentToday || 0;
       const totalAttLogs = state.metrics?.totalAttendance || state.attendance.length;
+      const slotsUsed = menteeCount;
+      const slotsFree = Math.max(0, MENTOR_CAPACITY - slotsUsed);
+      const capacityPct = Math.min(100, Math.round((slotsUsed / MENTOR_CAPACITY) * 100));
 
       return `
         <div class="space-y-6">
@@ -768,14 +1869,58 @@
             <div>
               <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">Mentor Portal</span>
               <h2 class="text-2xl font-extrabold mt-1">Welcome, ${state.user.name}!</h2>
-              <p class="text-xs text-teal-100 mt-1">Assigned Mentees Monitoring & Guidance</p>
+              <p class="text-xs text-teal-100 mt-1">Assigned Mentees Monitoring &amp; Guidance</p>
+            </div>
+            <div class="text-right">
+              <p class="text-3xl font-black">${slotsUsed}<span class="text-lg font-semibold text-teal-200">/${MENTOR_CAPACITY}</span></p>
+              <p class="text-xs text-teal-200 mt-0.5">Mentee slots used</p>
+              <div class="mt-2 w-32 bg-white/20 h-2 rounded-full overflow-hidden">
+                <div class="h-full ${slotsUsed >= MENTOR_CAPACITY ? 'bg-amber-400' : 'bg-emerald-300'} rounded-full transition-all" style="width:${capacityPct}%"></div>
+              </div>
+              <p class="text-[10px] text-teal-300 mt-1">${slotsFree > 0 ? slotsFree + ' slots available' : '⚠️ At full capacity'}</p>
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            ${renderStatCard('Assigned Mentees', menteeCount, 'fa-user-graduate', 'bg-teal-600')}
+            ${renderStatCard('My Mentees (' + slotsUsed + '/' + MENTOR_CAPACITY + ')', menteeCount, 'fa-user-graduate', 'bg-teal-600')}
             ${renderStatCard('Mentees Present Today', presentToday, 'fa-user-check', 'bg-emerald-600')}
             ${renderStatCard('Total Mentee Logs', totalAttLogs, 'fa-list-check', 'bg-sky-600')}
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">
+                <i class="fa-solid fa-users mr-2 text-teal-600"></i>My Assigned Mentees
+              </h3>
+              <span class="text-xs font-semibold px-3 py-1 rounded-full ${slotsUsed >= MENTOR_CAPACITY ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'}">
+                ${slotsUsed}/${MENTOR_CAPACITY} slots used
+              </span>
+            </div>
+            ${(state.students && state.students.length > 0) ? `
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left">
+                  <thead class="bg-slate-50 dark:bg-slate-800 text-slate-400 uppercase font-semibold text-[10px] border-b border-slate-100 dark:border-slate-700">
+                    <tr>
+                      <th class="px-5 py-3">#</th>
+                      <th class="px-5 py-3">Roll No.</th>
+                      <th class="px-5 py-3">Name</th>
+                      <th class="px-5 py-3">Department</th>
+                      <th class="px-5 py-3">Semester</th>
+                      <th class="px-5 py-3">Attendance %</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                    ${state.students.map((s, idx) => {
+                      const sAtts = (state.attendance||[]).filter(a=>a.raw_student_id===s.user_id||a.roll_number===s.roll_number);
+                      const pres = sAtts.filter(a=>a.status==='PRESENT').length;
+                      const pct = sAtts.length>0 ? parseFloat(((pres/sAtts.length)*100).toFixed(1)) : 0.0;
+                      const low = pct<75;
+                      return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-700/40"><td class="px-5 py-3 text-slate-400">'+(idx+1)+'</td><td class="px-5 py-3 font-bold text-slate-900 dark:text-white">'+(s.roll_number||'-')+'</td><td class="px-5 py-3 dark:text-slate-200">'+(s.name||'-')+'</td><td class="px-5 py-3 text-slate-500">'+(s.department||'CS')+'</td><td class="px-5 py-3 text-slate-500">Sem '+(s.semester||6)+'</td><td class="px-5 py-3 font-bold '+(low?'text-rose-500':'text-emerald-500')+'">'+pct.toFixed(1)+'%</td></tr>';
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            ` : '<div class="py-8 text-center text-slate-400 text-sm"><i class="fa-solid fa-user-slash text-2xl mb-2 block"></i>No mentees assigned yet.</div>'}
           </div>
 
           ${renderFacultyInteractiveAttendanceWidget()}
@@ -915,6 +2060,358 @@
       `;
     }
 
+    // ─── MENTOR ASSIGNMENTS PAGE (Admin) ────────────────────────────────────────
+    function renderMentorAssignmentsPage() {
+      const data = state.mentorAssignments || {};
+      const assignments = data.assignments || [];
+      const warning = data.mentor_capacity_warning || null;
+      const unassigned = data.unassigned_count || 0;
+      const totalStudents = data.total_students || 0;
+      const totalAssigned = data.total_assigned || 0;
+
+      // Build mentor list for reassign dropdown
+      const mentorOptions = assignments.map(m =>
+        `<option value="${m.mentor_user_id}">${m.mentor_name} (${m.assigned_count}/20)</option>`
+      ).join('');
+
+      return `
+        <div class="space-y-6">
+          <!-- Header -->
+          <div class="bg-gradient-to-r from-emerald-900 to-slate-900 text-white rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">Admin Portal</span>
+              <h2 class="text-2xl font-extrabold mt-1">Mentor Assignment Overview</h2>
+              <p class="text-xs text-emerald-200 mt-1">Persistent Mentor-Student Allocations (Manual HOD Allocation)</p>
+            </div>
+            <div class="px-4 py-2.5 rounded-xl bg-emerald-950/80 border border-emerald-700/60 text-emerald-200 text-xs font-bold flex items-center gap-2 shadow-inner">
+              <i class="fa-solid fa-shield-halved text-emerald-400"></i> Auto-Allocation Disabled (Managed via HOD Portal)
+            </div>
+          </div>
+
+          ${warning ? `
+            <div class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 flex items-start gap-3">
+              <i class="fa-solid fa-triangle-exclamation text-amber-500 text-lg mt-0.5"></i>
+              <div>
+                <h4 class="font-bold text-sm text-amber-900 dark:text-amber-200">Mentor Capacity Warning</h4>
+                <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">${warning}</p>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-5">
+            ${renderStatCard('Total Mentors', assignments.length, 'fa-handshake', 'bg-emerald-600')}
+            ${renderStatCard('Total Students', totalStudents, 'fa-user-graduate', 'bg-teal-600')}
+            ${renderStatCard('Assigned Students', totalAssigned, 'fa-user-check', 'bg-sky-600')}
+            ${renderStatCard('Unassigned Students', unassigned, 'fa-user-xmark', unassigned > 0 ? 'bg-amber-500' : 'bg-slate-500')}
+          </div>
+
+          <!-- Mentor Assignment Table -->
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">
+              <i class="fa-solid fa-people-arrows mr-2 text-emerald-600"></i>Mentor-Student Assignments
+            </h3>
+            ${assignments.length === 0 ? `
+              <div class="p-8 text-center text-slate-400">
+                <i class="fa-solid fa-user-slash text-3xl mb-3"></i>
+                <p class="font-medium">No mentors found. Add mentors first.</p>
+              </div>
+            ` : assignments.map(m => `
+              <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                <!-- Mentor Header Row -->
+                <div class="bg-emerald-50 dark:bg-emerald-900/30 px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">${m.mentor_name ? m.mentor_name.charAt(0) : 'M'}</div>
+                    <div>
+                      <h4 class="font-bold text-sm text-slate-900 dark:text-white">${m.mentor_name}</h4>
+                      <p class="text-[11px] text-slate-500">${m.mentor_email} | ${m.department}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    <div class="text-right">
+                      <span class="text-sm font-extrabold ${m.is_full ? 'text-amber-600' : 'text-emerald-600'}">${m.assigned_count}/${m.capacity}</span>
+                      <p class="text-[10px] text-slate-400">${m.is_full ? 'FULL' : m.capacity - m.assigned_count + ' slots free'}</p>
+                    </div>
+                    <div class="w-20 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                      <div class="h-full ${m.is_full ? 'bg-amber-500' : 'bg-emerald-500'} rounded-full" style="width:${Math.min(100, Math.round((m.assigned_count/m.capacity)*100))}%"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Student Sub-table -->
+                ${m.students.length > 0 ? `
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                      <thead class="bg-slate-50 dark:bg-slate-800">
+                        <tr class="text-slate-400 font-semibold">
+                          <th class="py-2 px-4 text-left">#</th>
+                          <th class="py-2 px-4 text-left">Roll Number</th>
+                          <th class="py-2 px-4 text-left">Name</th>
+                          <th class="py-2 px-4 text-left">Dept / Sem</th>
+                          <th class="py-2 px-4 text-right">Reassign To</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                        ${m.students.map((s, idx) => `
+                          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <td class="py-2.5 px-4 text-slate-400">${idx + 1}</td>
+                            <td class="py-2.5 px-4 font-bold text-slate-900 dark:text-white">${s.roll_number}</td>
+                            <td class="py-2.5 px-4 dark:text-slate-200">${s.name}</td>
+                            <td class="py-2.5 px-4 text-slate-500">${s.department} / Sem ${s.semester}</td>
+                            <td class="py-2.5 px-4 text-right">
+                              <div class="flex items-center justify-end gap-2">
+                                <select id="reassign-select-${s.user_id}" class="text-xs rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-1 dark:text-white">
+                                  ${assignments.filter(om => om.mentor_user_id !== m.mentor_user_id).map(om =>
+                                    `<option value="${om.mentor_user_id}">${om.mentor_name} (${om.assigned_count}/${om.capacity})</option>`
+                                  ).join('')}
+                                </select>
+                                <button onclick="reassignStudent(${s.user_id}, document.getElementById('reassign-select-${s.user_id}').value)" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition">
+                                  Reassign
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : `<p class="py-4 px-5 text-xs text-slate-400 italic">No students assigned yet.</p>`}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    async function autoAllocateMentors() {
+      alert('ℹ️ Automatic mentor allocation is permanently disabled in compliance with system policies. Mentor assignments are manually managed by Department HODs.');
+    }
+
+    async function reassignStudent(studentUserId, newMentorUserId) {
+      if (!newMentorUserId) return alert('Please select a mentor first.');
+      const res = await apiRequest('/mentor/reassign', 'POST', {
+        student_user_id: parseInt(studentUserId),
+        new_mentor_user_id: parseInt(newMentorUserId)
+      });
+      if (res.success) {
+        alert('✅ ' + res.message);
+        await fetchDashboardData();
+      } else {
+        alert('❌ Reassignment failed: ' + (res.message || 'Unknown error'));
+      }
+    }
+
+    // ─── HOD MANUAL MENTOR ALLOCATION PAGE ───────────────────────────────────────
+    function renderHODMentorAllocationPage() {
+      const data = state.hodMentorData || {};
+      const department = data.department || (state.user ? state.user.department : 'Computer Science');
+      const mentors = data.mentors || [];
+      const unassignedStudents = data.unassigned_students || [];
+      const totalStudents = data.total_students || 0;
+      const totalAssigned = data.total_assigned || 0;
+      const unassignedCount = data.unassigned_count || 0;
+
+      // Mentor options for assigning
+      const mentorOptions = mentors.map(m =>
+        `<option value="${m.mentor_user_id}">${m.mentor_name} (${m.assigned_count}/${m.capacity} mentees)</option>`
+      ).join('');
+
+      return `
+        <div class="space-y-6">
+          <!-- Header -->
+          <div class="bg-gradient-to-r from-rose-800 to-slate-900 text-white rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">HOD Portal</span>
+              <h2 class="text-2xl font-extrabold mt-1">Department Mentor Allocation</h2>
+              <p class="text-xs text-rose-200 mt-1">Department of ${department} &bull; Manual Mentor Assignment & Mentees Management</p>
+            </div>
+            <div class="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-xs font-bold flex items-center gap-2">
+              <i class="fa-solid fa-lock text-amber-300"></i> Auto-Allocation Permanently Disabled
+            </div>
+          </div>
+
+          <!-- Summary Stats -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-5">
+            ${renderStatCard('Department Mentors', mentors.length, 'fa-handshake', 'bg-rose-600')}
+            ${renderStatCard('Department Students', totalStudents, 'fa-user-graduate', 'bg-pink-600')}
+            ${renderStatCard('Assigned Students', totalAssigned, 'fa-user-check', 'bg-emerald-600')}
+            ${renderStatCard('Unassigned Students', unassignedCount, 'fa-user-xmark', unassignedCount > 0 ? 'bg-amber-500' : 'bg-slate-500')}
+          </div>
+
+          <!-- UNASSIGNED STUDENTS SECTION -->
+          ${unassignedStudents.length > 0 ? `
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-amber-300 dark:border-amber-800/60 shadow-sm space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="font-bold text-base text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-amber-600"></i> Unassigned Students (${unassignedStudents.length})
+                  </h3>
+                  <p class="text-xs text-slate-500">Select a department mentor and click assign to manually link each student.</p>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left">
+                  <thead class="bg-amber-50/70 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 font-bold border-b border-amber-200 dark:border-slate-700">
+                    <tr>
+                      <th class="py-3 px-3">Roll Number</th>
+                      <th class="py-3 px-3">Student Name</th>
+                      <th class="py-3 px-3">Department</th>
+                      <th class="py-3 px-3">Semester</th>
+                      <th class="py-3 px-3 text-right">Assign Mentor</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                    ${unassignedStudents.map(s => `
+                      <tr class="hover:bg-amber-50/40 dark:hover:bg-slate-700/30">
+                        <td class="py-3 px-3 font-bold text-slate-900 dark:text-white">${s.roll_number}</td>
+                        <td class="py-3 px-3 font-semibold dark:text-slate-200">${s.name}</td>
+                        <td class="py-3 px-3 text-slate-500">${s.department}</td>
+                        <td class="py-3 px-3 text-slate-500">Sem ${s.semester}</td>
+                        <td class="py-3 px-3 text-right">
+                          <div class="flex items-center justify-end gap-2">
+                            <select id="assign-mentor-${s.user_id}" class="text-xs rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-1.5 dark:text-white">
+                              ${mentorOptions}
+                            </select>
+                            <button onclick="hodSubmitManualAllocation(${s.user_id}, document.getElementById('assign-mentor-${s.user_id}').value)" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition">
+                              Assign
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- MENTOR ASSIGNMENTS & ROSTER -->
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-people-roof text-rose-600"></i> Department Mentors & Mentees
+              </h3>
+            </div>
+
+            ${mentors.length === 0 ? `
+              <div class="p-8 text-center text-slate-400">
+                <i class="fa-solid fa-user-slash text-3xl mb-3"></i>
+                <p class="font-medium">No mentors registered in this department.</p>
+              </div>
+            ` : mentors.map(m => `
+              <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden mb-4">
+                <!-- Mentor Header Row -->
+                <div class="bg-rose-50/60 dark:bg-rose-950/30 px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-rose-700 text-white flex items-center justify-center font-bold text-sm shadow">
+                      ${m.mentor_name ? m.mentor_name.charAt(0) : 'M'}
+                    </div>
+                    <div>
+                      <h4 class="font-bold text-sm text-slate-900 dark:text-white">${m.mentor_name}</h4>
+                      <p class="text-[11px] text-slate-500">${m.mentor_email} &bull; ${m.department}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    <div class="text-right">
+                      <span class="text-sm font-extrabold ${m.is_full ? 'text-amber-600' : 'text-emerald-600'}">${m.assigned_count}/${m.capacity}</span>
+                      <p class="text-[10px] text-slate-400">${m.is_full ? 'FULL' : (m.capacity - m.assigned_count) + ' slots free'}</p>
+                    </div>
+                    <div class="w-24 bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                      <div class="h-full ${m.is_full ? 'bg-amber-500' : 'bg-rose-600'} rounded-full" style="width:${Math.min(100, Math.round((m.assigned_count/m.capacity)*100))}%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Assigned Student Sub-table -->
+                ${m.students.length > 0 ? `
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                      <thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                          <th class="py-2.5 px-4 text-left">#</th>
+                          <th class="py-2.5 px-4 text-left">Roll Number</th>
+                          <th class="py-2.5 px-4 text-left">Name</th>
+                          <th class="py-2.5 px-4 text-left">Semester</th>
+                          <th class="py-2.5 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                        ${m.students.map((s, idx) => `
+                          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <td class="py-2.5 px-4 text-slate-400">${idx + 1}</td>
+                            <td class="py-2.5 px-4 font-bold text-slate-900 dark:text-white">${s.roll_number}</td>
+                            <td class="py-2.5 px-4 dark:text-slate-200 font-medium">${s.name}</td>
+                            <td class="py-2.5 px-4 text-slate-500">Sem ${s.semester}</td>
+                            <td class="py-2.5 px-4 text-right">
+                              <div class="flex items-center justify-end gap-2">
+                                <select id="hod-reassign-${s.user_id}" class="text-xs rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-1 dark:text-white">
+                                  ${mentors.filter(om => om.mentor_user_id !== m.mentor_user_id).map(om =>
+                                    `<option value="${om.mentor_user_id}">${om.mentor_name} (${om.assigned_count}/${om.capacity})</option>`
+                                  ).join('')}
+                                </select>
+                                <button onclick="hodSubmitReassign(${s.user_id}, document.getElementById('hod-reassign-${s.user_id}').value)" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition">
+                                  Reassign
+                                </button>
+                                <button onclick="hodSubmitRemove(${s.user_id})" class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-sm transition">
+                                  Remove
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : `<p class="py-4 px-5 text-xs text-slate-400 italic">No mentees assigned to this mentor yet.</p>`}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    async function hodSubmitManualAllocation(studentUserId, mentorUserId) {
+      if (!mentorUserId) return alert('Please select a mentor.');
+      const res = await apiRequest('/hod/mentor-assign', 'POST', {
+        student_user_id: parseInt(studentUserId),
+        mentor_user_id: parseInt(mentorUserId)
+      });
+      if (res.success) {
+        alert('✅ ' + res.message);
+        await fetchDashboardData();
+      } else {
+        alert('❌ Assignment failed: ' + (res.message || 'Unknown error'));
+      }
+    }
+
+    async function hodSubmitReassign(studentUserId, newMentorUserId) {
+      if (!newMentorUserId) return alert('Please select a new mentor.');
+      const res = await apiRequest('/hod/mentor-reassign', 'POST', {
+        student_user_id: parseInt(studentUserId),
+        new_mentor_user_id: parseInt(newMentorUserId)
+      });
+      if (res.success) {
+        alert('✅ ' + res.message);
+        await fetchDashboardData();
+      } else {
+        alert('❌ Reassignment failed: ' + (res.message || 'Unknown error'));
+      }
+    }
+
+    async function hodSubmitRemove(studentUserId) {
+      if (!confirm('Are you sure you want to remove this mentor assignment?')) return;
+      const res = await apiRequest('/hod/mentor-remove', 'POST', {
+        student_user_id: parseInt(studentUserId)
+      });
+      if (res.success) {
+        alert('✅ ' + res.message);
+        await fetchDashboardData();
+      } else {
+        alert('❌ Removal failed: ' + (res.message || 'Unknown error'));
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────────
+
     function renderStatCard(title, val, icon, colorBg) {
       return `
         <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
@@ -930,7 +2427,7 @@
     }
 
     function renderStudentProgressWidget() {
-      const summary = state.summary || { overallPercentage: 100.0, totalAttended: 1, totalConducted: 1 };
+      const summary = state.summary || { overallPercentage: 0.0, totalAttended: 0, totalConducted: 0 };
       const isRisk = summary.overallPercentage < 75;
 
       return `
@@ -1152,7 +2649,7 @@
         
         const attended = studentAtts.filter(a => a.status === 'PRESENT').length;
         const total = studentAtts.length;
-        const pct = total > 0 ? ((attended / total) * 100).toFixed(1) : '100.0';
+        const pct = total > 0 ? ((attended / total) * 100).toFixed(1) : '0.0';
 
         const currentStatus = dateRecord ? dateRecord.status : 'ABSENT';
 
@@ -1284,18 +2781,48 @@
       const canManage = ['admin', 'faculty', 'mentor'].includes(state.user.role);
       const canDelete = ['admin', 'faculty'].includes(state.user.role);
 
+      if (!state.studentRosterPage) state.studentRosterPage = 1;
+      if (!state.studentRosterSearch) state.studentRosterSearch = '';
+
+      const query = state.studentRosterSearch.toLowerCase().trim();
+      const filteredStudents = (state.students || []).filter(s => {
+        if (!query) return true;
+        const nameMatch = s.name && s.name.toLowerCase().includes(query);
+        const rollMatch = s.roll_number && String(s.roll_number).toLowerCase().includes(query);
+        const deptMatch = s.department && s.department.toLowerCase().includes(query);
+        const semMatch = String(s.semester).includes(query);
+        return nameMatch || rollMatch || deptMatch || semMatch;
+      });
+
+      const pageSize = 25;
+      const totalStudents = filteredStudents.length;
+      const totalPages = Math.max(1, Math.ceil(totalStudents / pageSize));
+      if (state.studentRosterPage > totalPages) state.studentRosterPage = totalPages;
+
+      const startIndex = (state.studentRosterPage - 1) * pageSize;
+      const paginatedStudents = filteredStudents.slice(startIndex, startIndex + pageSize);
+
       return `
         <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 class="font-bold text-base text-slate-900 dark:text-white">Student Roster Management</h3>
-              <p class="text-xs text-slate-500">Registered Students Roster</p>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                Student Roster Management
+                <span class="px-2.5 py-0.5 text-xs rounded-full bg-brand-100 text-brand-800 dark:bg-brand-900/60 dark:text-brand-300 font-bold">${state.students ? state.students.length : 0} Total Students</span>
+              </h3>
+              <p class="text-xs text-slate-500">Registered Students Roster (Displaying ${totalStudents} matching records)</p>
             </div>
-            ${canManage ? `
-              <button onclick="openAddStudentModal()" class="px-4 py-2 rounded-xl bg-brand-700 text-white font-bold text-xs hover:bg-brand-800 shadow-md">
-                <i class="fa-solid fa-plus mr-1"></i> Add Student
-              </button>
-            ` : ''}
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" placeholder="Search by ID, Name, Dept..." value="${state.studentRosterSearch}" oninput="state.studentRosterSearch = this.value; state.studentRosterPage = 1; renderApp();" class="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white w-48 sm:w-64 focus:ring-2 focus:ring-brand-500 outline-none" />
+              </div>
+              ${canManage ? `
+                <button onclick="openAddStudentModal()" class="px-4 py-2 rounded-xl bg-brand-700 text-white font-bold text-xs hover:bg-brand-800 shadow-md flex-shrink-0">
+                  <i class="fa-solid fa-plus mr-1"></i> Add Student
+                </button>
+              ` : ''}
+            </div>
           </div>
 
           <div class="overflow-x-auto">
@@ -1311,13 +2838,17 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                ${state.students.map(s => `
+                ${paginatedStudents.length === 0 ? `
+                  <tr>
+                    <td colspan="6" class="py-8 text-center text-slate-400 font-medium">No students found matching your search.</td>
+                  </tr>
+                ` : paginatedStudents.map(s => `
                   <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                    <td class="py-3 px-3 font-bold text-slate-900 dark:text-white">${s.roll_number}</td>
-                    <td class="py-3 px-3 font-medium dark:text-slate-200">${s.name}</td>
-                    <td class="py-3 px-3 text-slate-500">${s.email}</td>
-                    <td class="py-3 px-3 text-slate-500">${s.department}</td>
-                    <td class="py-3 px-3 text-slate-500">Sem ${s.semester}</td>
+                    <td class="py-3 px-3 font-bold text-slate-900 dark:text-white">${s.roll_number || s.student_id}</td>
+                    <td class="py-3 px-3 font-medium dark:text-slate-200">${s.name || '-'}</td>
+                    <td class="py-3 px-3 text-slate-500">${s.email || '-'}</td>
+                    <td class="py-3 px-3 text-slate-500">${s.department || 'Computer Science'}</td>
+                    <td class="py-3 px-3 text-slate-500">Sem ${s.semester || 4}</td>
                     <td class="py-3 px-3 text-right space-x-2">
                       <button onclick="openEditUserModal(${s.user_id})" class="text-brand-600 hover:text-brand-800 font-semibold"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
                       ${canDelete ? `<button onclick="deleteUserRecord(${s.user_id})" class="text-rose-500 hover:text-rose-700 font-semibold"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
@@ -1326,6 +2857,22 @@
                 `).join('')}
               </tbody>
             </table>
+          </div>
+
+          <!-- PAGINATION CONTROLS -->
+          <div class="flex items-center justify-between border-t border-slate-200 dark:border-slate-700 pt-3 text-xs">
+            <div class="text-slate-500">
+              Showing <span class="font-bold text-slate-800 dark:text-slate-200">${totalStudents > 0 ? startIndex + 1 : 0}</span> to <span class="font-bold text-slate-800 dark:text-slate-200">${Math.min(startIndex + pageSize, totalStudents)}</span> of <span class="font-bold text-slate-800 dark:text-slate-200">${totalStudents}</span> students
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="state.studentRosterPage = Math.max(1, state.studentRosterPage - 1); renderApp();" ${state.studentRosterPage <= 1 ? 'disabled class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed"' : 'class="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-300"'}>
+                <i class="fa-solid fa-chevron-left mr-1"></i> Prev
+              </button>
+              <span class="px-3 py-1 font-semibold text-slate-700 dark:text-slate-300">Page ${state.studentRosterPage} of ${totalPages}</span>
+              <button onclick="state.studentRosterPage = Math.min(${totalPages}, state.studentRosterPage + 1); renderApp();" ${state.studentRosterPage >= totalPages ? 'disabled class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed"' : 'class="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-300"'}>
+                Next <i class="fa-solid fa-chevron-right ml-1"></i>
+              </button>
+            </div>
           </div>
         </div>
       `;
@@ -1407,19 +2954,30 @@
       `;
     }
 
-    // 9. FACULTY CLASSROOM QR GENERATOR (NO SUBJECT SELECTOR)
+    // 9. FACULTY CLASSROOM QR GENERATOR (REAL MOBILE-SCANNABLE QR CODE)
     function renderQRSessionPage() {
       return `
         <div class="max-w-xl mx-auto bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl space-y-6">
           <div class="text-center space-y-1">
-            <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-700 mx-auto flex items-center justify-center text-xl font-bold">
+            <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-700 mx-auto flex items-center justify-center text-xl font-bold shadow-md">
               <i class="fa-solid fa-qrcode"></i>
             </div>
             <h3 class="font-bold text-lg text-slate-900 dark:text-white">Classroom Attendance QR Session</h3>
-            <p class="text-xs text-slate-500">Generate time-limited QR code for classroom student attendance scan</p>
+            <p class="text-xs text-slate-500">Generate real, mobile-scannable QR code for classroom student attendance</p>
           </div>
 
           <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Course Subject</label>
+              <select id="qr-subject-select" class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white">
+                <option value="Data Structures">Data Structures</option>
+                <option value="Database Systems">Database Systems</option>
+                <option value="Operating Systems">Operating Systems</option>
+                <option value="Web Technologies">Web Technologies</option>
+                <option value="Computer Networks">Computer Networks</option>
+              </select>
+            </div>
+
             <div>
               <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Expiration Duration (1 to 10 Minutes)</label>
               <select id="qr-duration" class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white">
@@ -1430,20 +2988,46 @@
               </select>
             </div>
 
-            <button onclick="startQRSession()" class="w-full py-3 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-bold text-xs shadow-lg transition">
-              <i class="fa-solid fa-qrcode mr-2"></i> Generate Classroom QR Session
+            <button onclick="startQRSession()" class="w-full py-3 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-bold text-xs shadow-lg transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-qrcode"></i> Generate Classroom QR Session
             </button>
           </div>
 
-          <div id="qr-display-container" class="hidden p-6 rounded-2xl border border-dashed border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 text-center space-y-4">
-            <div id="qr-image-holder" class="flex justify-center"></div>
-            <div>
-              <p id="qr-timer-text" class="text-sm font-bold text-brand-700 dark:text-brand-300 animate-pulse"></p>
-              <p id="qr-details-text" class="text-xs text-slate-500 dark:text-slate-400 mt-1"></p>
+          <div id="qr-display-container" class="hidden p-6 rounded-2xl border-2 border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 text-center space-y-4 shadow-xl">
+            <div class="border border-slate-300 dark:border-slate-600 bg-white p-5 rounded-2xl inline-block max-w-sm mx-auto shadow-inner text-slate-900">
+              <p class="font-black text-sm uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-2">Classroom Attendance</p>
+              
+              <div id="qr-image-holder" class="flex justify-center my-3"></div>
+              
+              <p class="text-xs font-extrabold text-brand-800 flex items-center justify-center gap-1">
+                <i class="fa-solid fa-mobile-screen-button text-sm"></i> Scan with Mobile Camera / Google Lens
+              </p>
+              
+              <div class="mt-2 py-1 px-3 rounded-full bg-slate-100 border border-slate-200 inline-block">
+                <p id="qr-timer-text" class="text-xs font-black text-rose-600 animate-pulse"></p>
+              </div>
             </div>
-            <button onclick="stopQRSession()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md">
-              <i class="fa-solid fa-stop mr-1.5"></i> End QR Session Now
-            </button>
+
+            <div class="space-y-2 max-w-md mx-auto">
+              <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-left">
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Mobile Scannable URL</span>
+                <a id="qr-scan-url-link" target="_blank" class="font-mono text-brand-600 dark:text-brand-400 font-bold hover:underline break-all"></a>
+              </div>
+
+              <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 text-[11px] text-emerald-800 dark:text-emerald-200 text-center font-medium">
+                <i class="fa-solid fa-globe mr-1.5 text-emerald-600 text-xs"></i>
+                Scan using your mobile phone camera or scanner. Accessible anywhere over mobile data (4G/5G) or Wi-Fi.
+              </div>
+            </div>
+
+            <div class="flex justify-center gap-3 pt-2">
+              <button onclick="startQRSession()" class="px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-bold text-xs shadow-md flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-arrows-rotate"></i> Refresh QR
+              </button>
+              <button onclick="stopQRSession()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-stop"></i> Close Session
+              </button>
+            </div>
           </div>
         </div>
       `;
@@ -1451,16 +3035,25 @@
 
     async function startQRSession() {
       const duration_minutes = parseInt(document.getElementById('qr-duration').value);
+      const subjectSelect = document.getElementById('qr-subject-select');
+      const subject = subjectSelect ? subjectSelect.value : 'Data Structures';
 
-      const res = await apiRequest('/qr/generate', 'POST', { duration_minutes });
+      const res = await apiRequest('/qr/generate', 'POST', { duration_minutes, subject });
       if (res.success) {
-        state.activeQRSession = res.qrSession;
+        state.activeQRSession = res.qrSession || res;
         const container = document.getElementById('qr-display-container');
         const holder = document.getElementById('qr-image-holder');
+        const link = document.getElementById('qr-scan-url-link');
         container.classList.remove('hidden');
 
-        holder.innerHTML = `<img src="${res.qrSession.qrImageURL}" class="w-64 h-64 rounded-xl shadow-md border bg-white p-2" />`;
-        document.getElementById('qr-details-text').innerText = `Session QR Token: ${res.qrSession.token}`;
+        const finalQrUrl = res.qr_url || (res.qrSession ? (res.qrSession.qr_url || res.qrSession.scanURL) : '');
+        const finalQrImage = res.qrSession?.qrImageURL || res.qrImageURL || '';
+
+        holder.innerHTML = `<img src="${finalQrImage}" alt="Classroom QR Code" class="w-72 h-72 rounded-xl shadow-md border bg-white p-2" />`;
+        if (link) {
+          link.href = finalQrUrl;
+          link.innerText = finalQrUrl;
+        }
 
         state.qrSecondsLeft = duration_minutes * 60;
         clearInterval(state.qrCountdownInterval);
@@ -1468,11 +3061,14 @@
           state.qrSecondsLeft--;
           const mins = Math.floor(state.qrSecondsLeft / 60);
           const secs = state.qrSecondsLeft % 60;
-          document.getElementById('qr-timer-text').innerText = `⏳ Session Expiration Countdown: ${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
+          const timerEl = document.getElementById('qr-timer-text');
+          if (timerEl) {
+            timerEl.innerText = `Valid for: ${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+          }
 
           if (state.qrSecondsLeft <= 0) {
             clearInterval(state.qrCountdownInterval);
-            document.getElementById('qr-timer-text').innerText = '❌ QR Code Expired';
+            if (timerEl) timerEl.innerText = '❌ QR Code Expired';
           }
         }, 1000);
       } else {
@@ -1482,10 +3078,172 @@
 
     async function stopQRSession() {
       if (state.activeQRSession) {
-        await apiRequest('/qr/stop', 'POST', { qr_id: state.activeQRSession.id });
+        await apiRequest('/qr/stop', 'POST', { qr_id: state.activeQRSession.id, session_id: state.activeQRSession.session_id });
         clearInterval(state.qrCountdownInterval);
         document.getElementById('qr-display-container').classList.add('hidden');
         alert('QR Session ended manually.');
+      }
+    }
+
+    // 9.5 MOBILE SCANNER LANDING & ATTENDANCE FLOW
+    async function checkMobileQrScanUrl() {
+      const urlParams = new URLSearchParams(window.location.search);
+      let sessionId = urlParams.get('session') || urlParams.get('session_id') || urlParams.get('token');
+
+      if (!sessionId && window.location.hash) {
+        const hashMatch = window.location.hash.match(/[?&]session=([^&]+)/);
+        if (hashMatch) sessionId = hashMatch[1];
+      }
+
+      if (sessionId) {
+        state.mobileSessionId = sessionId;
+        const res = await apiRequest(`/qr/session-info?session_id=${encodeURIComponent(sessionId)}`);
+        if (res.success) {
+          state.mobileSessionData = res.session;
+        } else {
+          state.mobileSessionData = { session_id: sessionId, is_expired: true, errorMsg: res.message };
+        }
+        renderMobileQrScanView();
+        return true;
+      }
+      return false;
+    }
+
+    function renderMobileQrScanView() {
+      const appEl = document.getElementById('app');
+      const session = state.mobileSessionData || {};
+      const isExpired = session.is_expired;
+
+      appEl.innerHTML = `
+        <div class="flex-1 flex flex-col justify-center items-center p-4 bg-gradient-to-br from-brand-900 via-slate-900 to-blue-950 text-white min-h-screen font-sans">
+          <div class="max-w-md w-full bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 text-center backdrop-blur-xl">
+            
+            <div class="w-16 h-16 rounded-2xl bg-brand-600 text-white mx-auto flex items-center justify-center text-3xl shadow-xl shadow-brand-500/30">
+              <i class="fa-solid fa-qrcode"></i>
+            </div>
+
+            <div>
+              <span class="px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 text-xs font-bold uppercase tracking-wider">
+                QR Session Detected
+              </span>
+              <h2 class="text-2xl font-extrabold text-white mt-2">Smart Attendance</h2>
+              <p class="text-xs text-slate-400 mt-1">Mobile Classroom Attendance Scan</p>
+            </div>
+
+            ${isExpired ? `
+              <div class="p-4 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs space-y-2">
+                <i class="fa-solid fa-circle-xmark text-2xl text-rose-400"></i>
+                <p class="font-bold text-sm">QR Code Expired or Invalid</p>
+                <p class="text-[11px] opacity-80">${session.errorMsg || 'This QR session is no longer active. Please ask your faculty member to generate a new classroom QR session.'}</p>
+              </div>
+            ` : `
+              <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700 text-left space-y-2 text-xs">
+                <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                  <span class="text-slate-400 font-medium">Subject:</span>
+                  <span class="font-extrabold text-white text-sm">${session.subject || 'Data Structures'}</span>
+                </div>
+                <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                  <span class="text-slate-400 font-medium">Faculty:</span>
+                  <span class="font-bold text-blue-300">${session.faculty_name || 'Class Faculty'}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400 font-medium">Session ID:</span>
+                  <span class="font-mono text-[11px] text-amber-300">${session.session_id}</span>
+                </div>
+              </div>
+
+              ${state.user && state.user.role === 'student' ? `
+                <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-left space-y-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-500 text-slate-950 font-black flex items-center justify-center text-lg">
+                      ${state.user.name ? state.user.name.charAt(0) : 'S'}
+                    </div>
+                    <div>
+                      <h4 class="font-bold text-white text-sm">${state.user.name}</h4>
+                      <p class="text-[11px] text-emerald-300">Authenticated Student</p>
+                    </div>
+                  </div>
+
+                  <button onclick="submitMobileQrAttendance()" id="mark-att-btn" class="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-sm shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-circle-check text-lg"></i> Mark Attendance Now
+                  </button>
+                </div>
+              ` : `
+                <form onsubmit="handleMobileQrAuthSubmit(event)" class="space-y-3 text-left">
+                  <div class="p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-[11px] text-blue-200">
+                    <i class="fa-solid fa-lock mr-1"></i> Please sign in with your student credentials to record your attendance.
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Student ID / Username / Email</label>
+                    <input type="text" id="mobile-login-id" required placeholder="Enter Student ID (e.g. 101 or STU101)" class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Password</label>
+                    <input type="password" id="mobile-login-pass" required placeholder="Enter Password" class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                  </div>
+                  <div id="mobile-login-err" class="hidden text-xs text-rose-400 bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20 font-bold"></div>
+                  <button type="submit" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-lg transition">
+                    <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Sign In & Mark Attendance
+                  </button>
+                </form>
+              `}
+            `}
+
+            <div id="mobile-attendance-result" class="hidden"></div>
+
+            <div class="pt-3 border-t border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+              <p><i class="fa-solid fa-globe text-emerald-400 mr-1"></i> Connected to Online Attendance Portal. Accessible over any mobile data (4G/5G) or Wi-Fi network.</p>
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    async function handleMobileQrAuthSubmit(e) {
+      e.preventDefault();
+      const identity = document.getElementById('mobile-login-id').value;
+      const password = document.getElementById('mobile-login-pass').value;
+      const errBox = document.getElementById('mobile-login-err');
+
+      const res = await apiRequest('/auth/login', 'POST', { username: identity, email: identity, password, role: 'student' });
+      if (res.success) {
+        state.token = res.token;
+        state.user = res.user;
+        localStorage.setItem('token', res.token);
+        await submitMobileQrAttendance();
+      } else {
+        errBox.classList.remove('hidden');
+        errBox.innerText = res.message || 'Invalid Student Credentials.';
+      }
+    }
+
+    async function submitMobileQrAttendance() {
+      const sessionId = state.mobileSessionId;
+      const resultBox = document.getElementById('mobile-attendance-result');
+
+      const res = await apiRequest('/qr/mark-attendance', 'POST', { session_id: sessionId });
+      if (resultBox) {
+        resultBox.classList.remove('hidden');
+        if (res.success) {
+          resultBox.innerHTML = `
+            <div class="p-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-xs space-y-2 text-center">
+              <i class="fa-solid fa-circle-check text-3xl text-emerald-400"></i>
+              <p class="font-bold text-sm text-white">Attendance Marked Successfully!</p>
+              <p class="text-xs opacity-90">${res.message}</p>
+            </div>
+          `;
+          const markBtn = document.getElementById('mark-att-btn');
+          if (markBtn) markBtn.style.display = 'none';
+        } else {
+          resultBox.innerHTML = `
+            <div class="p-4 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs space-y-2 text-center">
+              <i class="fa-solid fa-triangle-exclamation text-2xl text-amber-400"></i>
+              <p class="font-bold text-sm text-white">Attendance Status</p>
+              <p class="text-xs opacity-90">${res.message}</p>
+            </div>
+          `;
+        }
       }
     }
 
@@ -1599,23 +3357,85 @@
       alertBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1.5 text-base"></i> ${msg}`;
     }
 
+    function extractSessionIdFromScannedText(text) {
+      if (!text) return '';
+      let str = String(text).trim();
+      if (str.startsWith('ATTENDANCE_SESSION:')) {
+        return str.substring('ATTENDANCE_SESSION:'.length).trim();
+      }
+      try {
+        if (str.includes('?')) {
+          const urlObj = new URL(str, 'http://localhost');
+          const sess = urlObj.searchParams.get('session') || urlObj.searchParams.get('session_id') || urlObj.searchParams.get('token');
+          if (sess) return sess;
+        }
+      } catch (e) {}
+      const sessMatch = str.match(/(SESS_[A-Za-z0-9_]+)/);
+      if (sessMatch) return sessMatch[1];
+      return str;
+    }
+
     async function handleScannedToken(qr_token) {
-      const res = await apiRequest('/qr/scan', 'POST', { qr_token });
+      stopCameraScanner();
+      const cleanSessionId = extractSessionIdFromScannedText(qr_token);
+      const res = await apiRequest('/qr/mark-attendance', 'POST', { session_id: cleanSessionId, qr_token: cleanSessionId });
       const alertBox = document.getElementById('scan-status-alert');
       if (!alertBox) return;
 
       alertBox.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800', 'bg-amber-100', 'text-amber-800');
 
       if (res.success) {
-        alertBox.classList.add('bg-emerald-100', 'text-emerald-800', 'border', 'border-emerald-300');
-        alertBox.innerHTML = `<i class="fa-solid fa-circle-check text-base mr-1.5"></i> Attendance Marked Successfully`;
+        alertBox.className = 'p-5 rounded-2xl bg-emerald-500/15 text-emerald-900 dark:text-emerald-100 border border-emerald-500/40 text-left shadow-lg';
+        alertBox.innerHTML = `
+          <div class="space-y-3">
+            <div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-black text-base border-b border-emerald-500/30 pb-2">
+              <i class="fa-solid fa-circle-check text-xl"></i> Attendance Marked Successfully
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase">Student</span>
+                <strong class="text-sm text-slate-900 dark:text-white font-black">${res.details?.student_name || state.user.name}</strong>
+              </div>
+              <div>
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase">ID</span>
+                <strong class="text-sm text-slate-900 dark:text-white font-black">${res.details?.student_id || '101'}</strong>
+              </div>
+              <div>
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase">Time</span>
+                <strong class="text-sm text-slate-900 dark:text-white font-black">${res.details?.time || new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</strong>
+              </div>
+              <div>
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase">Status</span>
+                <span class="inline-block px-2.5 py-0.5 rounded bg-emerald-600 text-white font-black text-[10px] uppercase shadow-sm">PRESENT</span>
+              </div>
+            </div>
+          </div>
+        `;
         fetchDashboardData();
-      } else if (res.message.includes('Already Marked')) {
-        alertBox.classList.add('bg-amber-100', 'text-amber-800', 'border', 'border-amber-300');
-        alertBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-base mr-1.5"></i> Attendance Already Marked Today`;
+      } else if (res.message && res.message.toLowerCase().includes('already marked')) {
+        alertBox.className = 'p-4 rounded-2xl bg-amber-500/15 text-amber-900 dark:text-amber-100 border border-amber-500/40 text-left shadow-md';
+        alertBox.innerHTML = `
+          <div class="flex items-center gap-2 font-bold text-xs">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-lg"></i>
+            <span>Attendance already marked for this session.</span>
+          </div>
+        `;
+      } else if (res.message && res.message.toLowerCase().includes('expired')) {
+        alertBox.className = 'p-4 rounded-2xl bg-rose-500/15 text-rose-900 dark:text-rose-100 border border-rose-500/40 text-left shadow-md';
+        alertBox.innerHTML = `
+          <div class="flex items-center gap-2 font-bold text-xs">
+            <i class="fa-solid fa-circle-xmark text-rose-500 text-lg"></i>
+            <span>QR Session Expired</span>
+          </div>
+        `;
       } else {
-        alertBox.classList.add('bg-rose-100', 'text-rose-800', 'border', 'border-rose-300');
-        alertBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-base mr-1.5"></i> ${res.message}`;
+        alertBox.className = 'p-4 rounded-2xl bg-rose-500/15 text-rose-900 dark:text-rose-100 border border-rose-500/40 text-left shadow-md';
+        alertBox.innerHTML = `
+          <div class="flex items-center gap-2 font-bold text-xs">
+            <i class="fa-solid fa-circle-xmark text-rose-500 text-lg"></i>
+            <span>${res.message}</span>
+          </div>
+        `;
       }
     }
 
@@ -1625,13 +3445,278 @@
       handleScannedToken(targetToken);
     }
 
+    // 10.5 TIMETABLE MODULE PAGE (STUDENT VIEW, FACULTY VIEW, ADMIN/HOD/MENTOR CRUD)
+    function canModifyTimetableEntry(role, entry) {
+      if (role === 'admin') return true;
+      if (role === 'hod') {
+        const hodDept = state.user.department || 'Computer Science';
+        return entry.department && String(entry.department).toLowerCase() === String(hodDept).toLowerCase();
+      }
+      if (role === 'mentor') {
+        const mentorDept = state.user.department || 'Computer Science';
+        const mentorSem = state.user.semester || 6;
+        return entry.department && String(entry.department).toLowerCase() === String(mentorDept).toLowerCase() &&
+               parseInt(entry.semester || 6) === parseInt(mentorSem);
+      }
+      return false;
+    }
+
+    function renderTimeTablePage() {
+      const role = state.user ? state.user.role : 'student';
+      const ttList = state.timetable || [];
+      const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+      const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+      const todayDay = daysOfWeek[new Date().getDay()];
+      const activeDay = (todayDay === 'SUNDAY' ? 'MONDAY' : todayDay);
+
+      const canAdd = ['admin', 'hod', 'mentor'].includes(role);
+
+      return `
+        <div class="space-y-6">
+          <div class="bg-gradient-to-r from-brand-800 to-slate-900 text-white rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">Academic Module</span>
+              <h2 class="text-2xl font-extrabold mt-1">Class Time Table Schedule</h2>
+              <p class="text-xs text-brand-200 mt-1">Weekly schedule, time slots, subjects, rooms & assigned faculty</p>
+            </div>
+            ${canAdd ? `
+              <button onclick="openAddTimetableModal()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs shadow-lg transition flex items-center gap-1.5">
+                <i class="fa-solid fa-plus"></i> + Add Time Table
+              </button>
+            ` : ''}
+          </div>
+
+          <!-- Weekly Schedule Grid -->
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-calendar-days text-brand-600"></i> Weekly Schedule Grid
+              </h3>
+              <span class="px-3 py-1 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-800 dark:text-brand-200 text-xs font-bold">
+                Today: ${activeDay}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${days.map(d => {
+                const dayEntries = ttList.filter(t => (t.day || '').toUpperCase() === d);
+                const isToday = d === activeDay;
+
+                return `
+                  <div class="p-4 rounded-xl border ${isToday ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 shadow-md' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750'} space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                      <h4 class="font-black text-xs text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="fa-regular fa-clock ${isToday ? 'text-brand-600' : 'text-slate-400'}"></i> ${d}
+                      </h4>
+                      ${isToday ? '<span class="px-2 py-0.5 rounded bg-brand-600 text-white font-extrabold text-[10px] uppercase">Today</span>' : ''}
+                    </div>
+
+                    <div class="space-y-2">
+                      ${dayEntries.length > 0 ? dayEntries.map(e => {
+                        const canModify = canModifyTimetableEntry(role, e);
+                        return `
+                          <div class="p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1 text-xs shadow-sm">
+                            <div class="flex items-center justify-between">
+                              <span class="font-extrabold text-slate-900 dark:text-white">${e.subject}</span>
+                              <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-[10px]">${e.room || 'Room 101'}</span>
+                            </div>
+                            <p class="text-[11px] text-brand-600 dark:text-brand-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>${e.start_time || '09:00 AM'} - ${e.end_time || '10:00 AM'}</p>
+                            <div class="flex items-center justify-between pt-1 text-[11px] text-slate-500">
+                              <span><i class="fa-solid fa-chalkboard-user mr-1 text-slate-400"></i>${e.faculty_name || 'Prof. Rajesh Patel'}</span>
+                              <span>${e.department || 'CS'} | Sem ${e.semester || 6} Div ${e.division || 'A'}</span>
+                            </div>
+                            ${canModify ? `
+                              <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex justify-end gap-2">
+                                <button onclick="editTimetableEntry(${e.id})" class="px-2.5 py-1 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200 text-[10px] font-bold hover:bg-blue-200">Edit</button>
+                                <button onclick="deleteTimetableEntry(${e.id})" class="px-2.5 py-1 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200 text-[10px] font-bold hover:bg-rose-200">Delete</button>
+                              </div>
+                            ` : ''}
+                          </div>
+                        `;
+                      }).join('') : `<p class="text-[11px] text-slate-400 italic">No classes scheduled.</p>`}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Add / Edit Timetable Modal -->
+          <div id="timetable-modal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 dark:border-slate-700 text-left">
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 id="tt-modal-title" class="font-bold text-base text-slate-900 dark:text-white">Add Timetable Entry</h3>
+                <button onclick="closeTimetableModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <form onsubmit="handleTimetableFormSubmit(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="tt-entry-id" value="" />
+                <div>
+                  <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Day of Week</label>
+                  <select id="tt-day" required class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white">
+                    <option value="MONDAY">MONDAY</option>
+                    <option value="TUESDAY">TUESDAY</option>
+                    <option value="WEDNESDAY">WEDNESDAY</option>
+                    <option value="THURSDAY">THURSDAY</option>
+                    <option value="FRIDAY">FRIDAY</option>
+                    <option value="SATURDAY">SATURDAY</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Course Subject</label>
+                  <input type="text" id="tt-subject" placeholder="e.g. Data Structures" required class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Assigned Faculty Name</label>
+                  <input type="text" id="tt-faculty-name" placeholder="e.g. Prof. Rajesh Patel" required class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white" />
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Department</label>
+                    <select id="tt-department" required class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white">
+                      <option value="Computer Science">Computer Science</option>
+                      <option value="Information Technology">Information Technology</option>
+                      <option value="Electrical Engineering">Electrical Engineering</option>
+                      <option value="Mechanical Engineering">Mechanical Engineering</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Semester</label>
+                    <select id="tt-semester" required class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white">
+                      <option value="1">Semester 1</option>
+                      <option value="2">Semester 2</option>
+                      <option value="3">Semester 3</option>
+                      <option value="4">Semester 4</option>
+                      <option value="5">Semester 5</option>
+                      <option value="6" selected>Semester 6</option>
+                      <option value="7">Semester 7</option>
+                      <option value="8">Semester 8</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Division</label>
+                    <input type="text" id="tt-division" placeholder="e.g. A" required class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white" value="A" />
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Start Time</label>
+                    <input type="text" id="tt-start-time" placeholder="e.g. 10:00 AM" required class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white" />
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">End Time</label>
+                    <input type="text" id="tt-end-time" placeholder="e.g. 11:00 AM" required class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white" />
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Room/Classroom</label>
+                    <input type="text" id="tt-room" placeholder="e.g. Room 204" required class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 dark:text-white" />
+                  </div>
+                </div>
+                <div class="pt-3 flex justify-end gap-2">
+                  <button type="button" onclick="closeTimetableModal()" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold">Cancel</button>
+                  <button type="submit" class="px-5 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-bold">Save Entry</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function openAddTimetableModal() {
+      document.getElementById('tt-entry-id').value = '';
+      document.getElementById('tt-modal-title').innerText = 'Add Timetable Entry';
+      document.getElementById('tt-subject').value = '';
+      document.getElementById('tt-start-time').value = '10:00 AM';
+      document.getElementById('tt-end-time').value = '11:00 AM';
+      document.getElementById('tt-department').value = state.user.department || 'Computer Science';
+      document.getElementById('tt-semester').value = state.user.semester || '6';
+      document.getElementById('tt-division').value = 'A';
+      document.getElementById('tt-room').value = 'Room 204';
+      document.getElementById('tt-faculty-name').value = 'Prof. Rajesh Patel';
+      document.getElementById('timetable-modal').classList.remove('hidden');
+    }
+
+    function closeTimetableModal() {
+      document.getElementById('timetable-modal').classList.add('hidden');
+    }
+
+    function editTimetableEntry(id) {
+      const entry = (state.timetable || []).find(t => t.id === id);
+      if (!entry) return;
+      document.getElementById('tt-entry-id').value = entry.id;
+      document.getElementById('tt-modal-title').innerText = 'Edit Timetable Entry';
+      document.getElementById('tt-day').value = (entry.day || 'MONDAY').toUpperCase();
+      document.getElementById('tt-subject').value = entry.subject || '';
+      document.getElementById('tt-start-time').value = entry.start_time || '10:00 AM';
+      document.getElementById('tt-end-time').value = entry.end_time || '11:00 AM';
+      document.getElementById('tt-department').value = entry.department || 'Computer Science';
+      document.getElementById('tt-semester').value = entry.semester || '6';
+      document.getElementById('tt-division').value = entry.division || 'A';
+      document.getElementById('tt-room').value = entry.room || 'Room 204';
+      document.getElementById('tt-faculty-name').value = entry.faculty_name || 'Prof. Rajesh Patel';
+      document.getElementById('timetable-modal').classList.remove('hidden');
+    }
+
+    async function deleteTimetableEntry(id) {
+      if (!confirm('Are you sure you want to delete this timetable entry?')) return;
+      const res = await apiRequest('/timetable/delete', 'POST', { id });
+      if (res.success) {
+        state.timetable = state.timetable.filter(t => t.id !== id);
+        renderApp();
+      } else {
+        alert(res.message);
+      }
+    }
+
+    async function handleTimetableFormSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('tt-entry-id').value;
+      const day = document.getElementById('tt-day').value;
+      const start_time = document.getElementById('tt-start-time').value;
+      const end_time = document.getElementById('tt-end-time').value;
+      const subject = document.getElementById('tt-subject').value;
+      const department = document.getElementById('tt-department').value;
+      const semester = parseInt(document.getElementById('tt-semester').value) || 6;
+      const division = document.getElementById('tt-division').value;
+      const room = document.getElementById('tt-room').value;
+      const faculty_name = document.getElementById('tt-faculty-name').value;
+
+      const payload = { day, start_time, end_time, subject, department, semester, division, room, faculty_name };
+      if (id) payload.id = parseInt(id);
+
+      const endpoint = id ? '/timetable/update' : '/timetable/create';
+      const res = await apiRequest(endpoint, 'POST', payload);
+
+      if (res.success) {
+        closeTimetableModal();
+        const fetchRes = await apiRequest('/timetable');
+        if (fetchRes.success) state.timetable = fetchRes.timetable;
+        renderApp();
+      } else {
+        alert(res.message || 'Action failed.');
+      }
+    }
+
     // 11. ATTENDANCE RECORDS TABLE PAGE (EXACT REQUIRED COLUMNS)
     function renderAttendanceRecordsPage() {
+      if (!state.attRecordsPage) state.attRecordsPage = 1;
+      const pageSize = 25;
+      const totalRecords = state.attendance ? state.attendance.length : 0;
+      const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+      if (state.attRecordsPage > totalPages) state.attRecordsPage = totalPages;
+
+      const startIndex = (state.attRecordsPage - 1) * pageSize;
+      const paginatedAttendance = (state.attendance || []).slice(startIndex, startIndex + pageSize);
+
       return `
         <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h3 class="font-bold text-base text-slate-900 dark:text-white">Attendance Logs Table</h3>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                Attendance Logs Table
+                <span class="px-2.5 py-0.5 text-xs rounded-full bg-brand-100 text-brand-800 dark:bg-brand-900/60 dark:text-brand-300 font-bold">${totalRecords} Total Records</span>
+              </h3>
               <p class="text-xs text-slate-500">Official Student Attendance Log Records</p>
             </div>
             <button onclick="exportExcel()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-sm">
@@ -1655,7 +3740,11 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                ${state.attendance.map(a => `
+                ${paginatedAttendance.length === 0 ? `
+                  <tr>
+                    <td colspan="9" class="py-8 text-center text-slate-400 font-medium">No attendance records found.</td>
+                  </tr>
+                ` : paginatedAttendance.map(a => `
                   <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                     <td class="py-3.5 px-3 font-bold text-slate-900 dark:text-white">${a.student_id}</td>
                     <td class="py-3.5 px-3 font-semibold text-slate-800 dark:text-slate-200">${a.student_name}</td>
@@ -1677,6 +3766,124 @@
                     <td class="py-3.5 px-3 font-bold ${parseFloat(a.percentage) < 75 ? 'text-rose-600' : 'text-emerald-600'}">${a.percentage}%</td>
                   </tr>
                 `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- PAGINATION CONTROLS -->
+          <div class="flex items-center justify-between border-t border-slate-200 dark:border-slate-700 pt-3 text-xs">
+            <div class="text-slate-500">
+              Showing <span class="font-bold text-slate-800 dark:text-slate-200">${totalRecords > 0 ? startIndex + 1 : 0}</span> to <span class="font-bold text-slate-800 dark:text-slate-200">${Math.min(startIndex + pageSize, totalRecords)}</span> of <span class="font-bold text-slate-800 dark:text-slate-200">${totalRecords}</span> records
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="state.attRecordsPage = Math.max(1, state.attRecordsPage - 1); renderApp();" ${state.attRecordsPage <= 1 ? 'disabled class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed"' : 'class="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-300"'}>
+                <i class="fa-solid fa-chevron-left mr-1"></i> Prev
+              </button>
+              <span class="px-3 py-1 font-semibold text-slate-700 dark:text-slate-300">Page ${state.attRecordsPage} of ${totalPages}</span>
+              <button onclick="state.attRecordsPage = Math.min(${totalPages}, state.attRecordsPage + 1); renderApp();" ${state.attRecordsPage >= totalPages ? 'disabled class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed"' : 'class="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-300"'}>
+                Next <i class="fa-solid fa-chevron-right ml-1"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // LOW ATTENDANCE ALERTS DEDICATED PAGE
+    function renderLowAttendanceAlertsPage() {
+      const alerts = state.alerts || [];
+      const role = state.user?.role;
+
+      if (role === 'parent') {
+        const childObj = state.students && state.students.length > 0 ? state.students[0] : null;
+        const childName = childObj ? childObj.name : (state.user?.studentDetails?.name || 'Linked Child');
+        const childRoll = childObj ? childObj.roll_number : (state.user?.studentDetails?.roll_number || 'STU101');
+
+        return `
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-base text-slate-900 dark:text-white">
+                  <i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i>Attendance Alerts (${childName})
+                </h3>
+                <p class="text-xs text-slate-500">Official System Low Attendance Alerts for Student Roll Number: <strong>${childRoll}</strong></p>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold ${alerts.length > 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
+                ${alerts.length > 0 ? `⚠️ ${alerts.length} Active Alert(s)` : '✅ Normal Attendance Status'}
+              </span>
+            </div>
+
+            ${alerts.length > 0 ? `
+              <div class="space-y-4">
+                ${alerts.map(alt => `
+                  <div class="p-5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-700 text-white shadow-xl space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2.5 py-1 rounded-full bg-white/20 text-xs font-bold uppercase"><i class="fa-solid fa-bell mr-1"></i> AUTOMATIC PARENT ALERT</span>
+                      <span class="text-xs font-medium text-rose-100">${alt.date_time_formatted || new Date(alt.date_time).toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <h4 class="text-base font-extrabold text-white">${alt.alert_message || `Attendance Alert: ${alt.student_name}'s attendance in ${alt.subject} is ${alt.percentage}%. Attendance is below the required 50%.`}</h4>
+                      <p class="text-xs text-rose-100 mt-1.5">Student: <strong>${alt.student_name}</strong> | Roll Number: <strong>${alt.roll_number}</strong> | Subject: <strong>${alt.subject}</strong> | Attendance %: <strong class="text-amber-200 font-extrabold text-sm">${alt.percentage}%</strong></p>
+                    </div>
+                    <div class="pt-2 border-t border-white/20 flex justify-between items-center text-xs">
+                      <span class="text-rose-100">Status: <strong class="text-white uppercase font-bold">Below Mandatory 50% Threshold</strong></span>
+                      <span class="px-2.5 py-0.5 rounded bg-white/20 text-white font-bold text-[10px]">Action Required</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : `
+              <div class="p-8 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-center space-y-2">
+                <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h4 class="font-bold text-sm text-emerald-900 dark:text-emerald-200">No Low Attendance Alerts</h4>
+                <p class="text-xs text-emerald-700 dark:text-emerald-400">${childName}'s attendance is currently in good standing (above 50% requirement).</p>
+              </div>
+            `}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 mr-2"></i>Low Attendance Alerts (< 50% Threshold)
+              </h3>
+              <p class="text-xs text-slate-500">Students with subject attendance below the mandatory 50% limit</p>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200">
+              ${alerts.length} Active Alert(s)
+            </span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 font-semibold bg-slate-50 dark:bg-slate-800">
+                  <th class="py-3 px-3">Roll Number</th>
+                  <th class="py-3 px-3">Student Name</th>
+                  <th class="py-3 px-3">Subject</th>
+                  <th class="py-3 px-3">Attendance %</th>
+                  <th class="py-3 px-3">Alert Status</th>
+                  <th class="py-3 px-3">Alert Date/Time</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                ${alerts.length > 0 ? alerts.map(alt => `
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <td class="py-3 px-3 font-bold text-slate-900 dark:text-white">${alt.roll_number}</td>
+                    <td class="py-3 px-3 font-medium dark:text-slate-200">${alt.student_name}</td>
+                    <td class="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">${alt.subject}</td>
+                    <td class="py-3 px-3 font-extrabold text-rose-600">${alt.percentage}%</td>
+                    <td class="py-3 px-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] uppercase font-extrabold bg-rose-600 text-white shadow-sm">ACTIVE ALERT</span>
+                    </td>
+                    <td class="py-3 px-3 text-slate-500">${alt.date_time_formatted || new Date(alt.date_time).toLocaleString()}</td>
+                  </tr>
+                `).join('') : `<tr><td colspan="6" class="py-4 text-center text-slate-400">No students currently have attendance below 50%.</td></tr>`}
               </tbody>
             </table>
           </div>
@@ -1789,6 +3996,103 @@
       }
     }
 
+    // PASSWORD CHANGE MODAL HANDLERS
+    function showPasswordChangeModal(isMandatory = false) {
+      state.isPasswordChangeMandatory = !!isMandatory;
+      const modal = document.getElementById('password-change-modal');
+      const notice = document.getElementById('pwd-modal-notice');
+      const closeBtn = document.getElementById('pwd-modal-close-btn');
+      const cancelBtn = document.getElementById('pwd-cancel-btn');
+      const errBox = document.getElementById('pwd-modal-err');
+      const succBox = document.getElementById('pwd-modal-succ');
+
+      if (errBox) errBox.classList.add('hidden');
+      if (succBox) succBox.classList.add('hidden');
+      const currInput = document.getElementById('pwd-current');
+      const newInput = document.getElementById('pwd-new');
+      const confInput = document.getElementById('pwd-confirm');
+      if (currInput) currInput.value = '';
+      if (newInput) newInput.value = '';
+      if (confInput) confInput.value = '';
+
+      if (isMandatory) {
+        if (notice) notice.classList.remove('hidden');
+        if (closeBtn) closeBtn.classList.add('hidden');
+        if (cancelBtn) cancelBtn.classList.add('hidden');
+      } else {
+        if (notice) notice.classList.add('hidden');
+        if (closeBtn) closeBtn.classList.remove('hidden');
+        if (cancelBtn) cancelBtn.classList.remove('hidden');
+      }
+
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closePasswordChangeModal() {
+      if (state.isPasswordChangeMandatory) return;
+      const modal = document.getElementById('password-change-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function handlePasswordChangeSubmit(e) {
+      e.preventDefault();
+      const current_password = document.getElementById('pwd-current').value;
+      const new_password = document.getElementById('pwd-new').value;
+      const confirm_password = document.getElementById('pwd-confirm').value;
+      const errBox = document.getElementById('pwd-modal-err');
+      const succBox = document.getElementById('pwd-modal-succ');
+      const submitBtn = document.getElementById('pwd-submit-btn');
+
+      if (errBox) errBox.classList.add('hidden');
+      if (succBox) succBox.classList.add('hidden');
+
+      if (new_password !== confirm_password) {
+        if (errBox) {
+          errBox.classList.remove('hidden');
+          errBox.innerText = 'New password and confirm password do not match.';
+        }
+        return;
+      }
+
+      if (new_password.length < 6) {
+        if (errBox) {
+          errBox.classList.remove('hidden');
+          errBox.innerText = 'New password must be at least 6 characters long.';
+        }
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Updating...';
+      }
+
+      const res = await apiRequest('/auth/change-password', 'POST', { current_password, new_password });
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Update Password';
+      }
+
+      if (res && res.success) {
+        if (succBox) {
+          succBox.classList.remove('hidden');
+          succBox.innerText = 'Password updated successfully!';
+        }
+        state.isPasswordChangeMandatory = false;
+        if (state.user) state.user.must_change_password = false;
+        setTimeout(() => {
+          const modal = document.getElementById('password-change-modal');
+          if (modal) modal.classList.add('hidden');
+        }, 1200);
+      } else {
+        if (errBox) {
+          errBox.classList.remove('hidden');
+          errBox.innerText = (res && res.message) ? res.message : 'Failed to update password.';
+        }
+      }
+    }
+
     // CHATBOT CONTROLLERS
     function toggleChatbot() {
       document.getElementById('chat-window').classList.toggle('hidden');
@@ -1808,7 +4112,7 @@
       const msgsBox = document.getElementById('chat-messages');
       msgsBox.innerHTML += `
         <div class="flex gap-2 justify-end">
-          <div class="bg-brand-700 text-white p-3 rounded-2xl rounded-tr-none shadow-sm max-w-[85%]">
+          <div class="bg-brand-700 text-white p-3 rounded-2xl rounded-tr-none shadow-sm max-w-[85%] text-xs">
             ${msg}
           </div>
         </div>
@@ -1817,22 +4121,45 @@
       input.value = '';
       msgsBox.scrollTop = msgsBox.scrollHeight;
 
+      const loadingId = 'ai-typing-' + Date.now();
+      msgsBox.innerHTML += `
+        <div id="${loadingId}" class="flex gap-2">
+          <div class="w-7 h-7 rounded-full bg-brand-700 text-white flex items-center justify-center text-xs flex-shrink-0">AI</div>
+          <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl rounded-tl-none border border-slate-200 dark:border-slate-700 shadow-sm max-w-[85%] text-slate-500 italic text-xs">
+            <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Searching records...
+          </div>
+        </div>
+      `;
+      msgsBox.scrollTop = msgsBox.scrollHeight;
+
       let reply = '';
-      const text = msg.toLowerCase();
-      if (text.includes('percentage') || text.includes('attendance')) {
-        const pct = state.summary ? state.summary.overallPercentage : 100.0;
-        reply = ` Your current aggregate attendance is **${pct}%**. Minimum 75% requirement is mandatory.`;
-      } else if (text.includes('rule') || text.includes('criteria')) {
-        reply = `📋 **Institutional Rules**:\n1. Minimum 75% attendance required.\n2. QR codes expire within the specified duration.\n3. Duplicate attendance on the same day is prohibited.`;
-      } else {
-        reply = `Hello ${state.user ? state.user.name : ''}! I am your AI Attendance Assistant. How may I assist you with your attendance or role metrics today?`;
+      try {
+        const res = await apiRequest('/chat', 'POST', { message: msg });
+        if (res && res.success && res.reply) {
+          reply = res.reply;
+        } else if (res && res.message) {
+          reply = res.message;
+        } else {
+          reply = 'Sorry, could not process your query at this moment.';
+        }
+      } catch (err) {
+        reply = 'An error occurred while contacting the chatbot service.';
       }
+
+      const typingEl = document.getElementById(loadingId);
+      if (typingEl) typingEl.remove();
+
+      // Format markdown bold & line breaks
+      let formattedReply = reply
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`([^`]+)`/g, '<code class="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-[11px] font-mono text-brand-700 dark:text-brand-300">$1</code>')
+        .replace(/\n/g, '<br/>');
 
       msgsBox.innerHTML += `
         <div class="flex gap-2">
           <div class="w-7 h-7 rounded-full bg-brand-700 text-white flex items-center justify-center text-xs flex-shrink-0">AI</div>
-          <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl rounded-tl-none border border-slate-200 dark:border-slate-700 shadow-sm max-w-[85%] text-slate-700 dark:text-slate-200">
-            ${reply.replace(/\n/g, '<br/>')}
+          <div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl rounded-tl-none border border-slate-200 dark:border-slate-700 shadow-sm max-w-[85%] text-slate-700 dark:text-slate-200 text-xs leading-relaxed">
+            ${formattedReply}
           </div>
         </div>
       `;
@@ -1860,7 +4187,7 @@
         const dataPct = studentList.map(s => {
           const studentAtts = (state.attendance || []).filter(a => a.raw_student_id === s.user_id || a.roll_number === s.roll_number);
           const attended = studentAtts.filter(a => a.status === 'PRESENT').length;
-          return studentAtts.length > 0 ? parseFloat(((attended / studentAtts.length) * 100).toFixed(1)) : 100;
+          return studentAtts.length > 0 ? parseFloat(((attended / studentAtts.length) * 100).toFixed(1)) : 0;
         });
 
         window.myDashboardChartInstance = new Chart(ctx1, {
@@ -1870,7 +4197,7 @@
             datasets: [{
               label: 'Attendance %',
               data: dataPct.length > 0 ? dataPct : [0],
-              backgroundColor: dataPct.map(p => p < 75 ? '#f43f5e' : '#2563eb'),
+              backgroundColor: dataPct.map(p => p < 75 ? '#f43f5e' : '#10b981'),
               borderRadius: 8
             }]
           },
