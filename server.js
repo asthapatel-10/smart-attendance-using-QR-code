@@ -2,7 +2,10 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 import { handleApiRequest } from './apiHandler.js';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,7 +38,15 @@ const server = http.createServer(async (req, res) => {
       } catch (e) {
         body = {};
       }
-      await handleApiRequest(req, res, pathName, queryParams, body);
+      try {
+        await handleApiRequest(req, res, pathName, queryParams, body);
+      } catch (err) {
+        console.error('⚠️ Unhandled API Error:', err);
+        if (!res.headersSent) {
+          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        }
+        res.end(JSON.stringify({ success: false, message: 'Server internal error: ' + err.message }));
+      }
     });
     return;
   }
@@ -43,9 +54,9 @@ const server = http.createServer(async (req, res) => {
   // 3. Serve Frontend Web Dashboard
   const frontendPath = path.join(__dirname, '../frontend/index.html');
   if (fs.existsSync(frontendPath)) {
-    const html = fs.readFileSync(frontendPath, 'utf8');
+    const htmlContent = fs.readFileSync(frontendPath, 'utf8');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    return res.end(html);
+    return res.end(htmlContent);
   } else {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     return res.end(`<h1>Smart Attendance System Backend API</h1><p>API status: Online on port ${PORT}</p>`);
